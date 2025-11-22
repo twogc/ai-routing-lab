@@ -7,7 +7,7 @@ Fast and interpretable, good for feature importance analysis.
 
 import logging
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 import numpy as np
 
@@ -15,6 +15,7 @@ import numpy as np
 @dataclass
 class LoadPrediction:
     """Result of load prediction"""
+
     predicted_load: float
     confidence_interval: Tuple[float, float]  # (lower, upper)
     uncertainty: float  # Standard deviation of prediction
@@ -38,7 +39,7 @@ class RandomForestLoadModel:
         n_trees: int = 100,
         max_depth: int = 15,
         min_samples_split: int = 2,
-        logger: Optional[logging.Logger] = None
+        logger: Optional[logging.Logger] = None,
     ):
         """
         Initialize Random Forest Load model.
@@ -62,14 +63,14 @@ class RandomForestLoadModel:
         self.scaler_std = None
 
         self.metrics = {
-            'mse': 0.0,
-            'rmse': 0.0,
-            'mae': 0.0,
-            'r_squared': 0.0,
-            'total_predictions': 0,
+            "mse": 0.0,
+            "rmse": 0.0,
+            "mae": 0.0,
+            "r_squared": 0.0,
+            "total_predictions": 0,
         }
 
-    def fit(self, X: np.ndarray, y: np.ndarray) -> 'RandomForestLoadModel':
+    def fit(self, X: np.ndarray, y: np.ndarray) -> "RandomForestLoadModel":
         """
         Fit Random Forest on data.
 
@@ -110,14 +111,14 @@ class RandomForestLoadModel:
         # Calculate training metrics
         predictions = self.predict(X)[0]
         mse = np.mean((y - predictions) ** 2)
-        self.metrics['mse'] = mse
-        self.metrics['rmse'] = np.sqrt(mse)
-        self.metrics['mae'] = np.mean(np.abs(y - predictions))
+        self.metrics["mse"] = mse
+        self.metrics["rmse"] = np.sqrt(mse)
+        self.metrics["mae"] = np.mean(np.abs(y - predictions))
 
         # R² score
         ss_res = np.sum((y - predictions) ** 2)
         ss_tot = np.sum((y - np.mean(y)) ** 2)
-        self.metrics['r_squared'] = 1 - (ss_res / ss_tot) if ss_tot > 0 else 0
+        self.metrics["r_squared"] = 1 - (ss_res / ss_tot) if ss_tot > 0 else 0
 
         self.fitted = True
         self.logger.info(
@@ -143,9 +144,7 @@ class RandomForestLoadModel:
         X = X.astype(np.float32)
 
         if X.shape[1] != self.n_features:
-            raise ValueError(
-                f"Expected {self.n_features} features, got {X.shape[1]}"
-            )
+            raise ValueError(f"Expected {self.n_features} features, got {X.shape[1]}")
 
         # Scale
         X_scaled = (X - self.scaler_mean) / self.scaler_std
@@ -164,7 +163,7 @@ class RandomForestLoadModel:
         # Uncertainty = std of tree predictions
         uncertainties = np.std(tree_predictions, axis=0)
 
-        self.metrics['total_predictions'] += len(X)
+        self.metrics["total_predictions"] += len(X)
 
         return predictions, uncertainties
 
@@ -192,12 +191,16 @@ class RandomForestLoadModel:
             predicted_load=float(pred),
             confidence_interval=(float(ci_lower), float(ci_upper)),
             uncertainty=float(uncertainty),
-            feature_importance=dict(
-                zip(
-                    [f"feature_{i}" for i in range(self.n_features)],
-                    self.feature_importances.tolist()
+            feature_importance=(
+                dict(
+                    zip(
+                        [f"feature_{i}" for i in range(self.n_features)],
+                        self.feature_importances.tolist(),
+                    )
                 )
-            ) if self.feature_importances is not None else None
+                if self.feature_importances is not None
+                else None
+            ),
         )
 
     def score(self, X: np.ndarray, y: np.ndarray) -> float:
@@ -220,22 +223,17 @@ class RandomForestLoadModel:
         """Get model metrics"""
         return {
             **self.metrics,
-            'n_trees': self.n_trees,
-            'max_depth': self.max_depth,
+            "n_trees": self.n_trees,
+            "max_depth": self.max_depth,
         }
 
-    def _build_tree(
-        self,
-        X: np.ndarray,
-        y: np.ndarray,
-        depth: int
-    ) -> Dict:
+    def _build_tree(self, X: np.ndarray, y: np.ndarray, depth: int) -> Dict:
         """Build a single decision tree"""
         if depth >= self.max_depth or len(X) <= self.min_samples_split:
-            return {'leaf': True, 'value': np.mean(y)}
+            return {"leaf": True, "value": np.mean(y)}
 
         # Find best split
-        best_score = float('inf')
+        best_score = float("inf")
         best_feature = None
         best_threshold = None
 
@@ -253,10 +251,7 @@ class RandomForestLoadModel:
                 y_left = y[left_mask]
                 y_right = y[right_mask]
 
-                mse = (
-                    len(y_left) * np.var(y_left) +
-                    len(y_right) * np.var(y_right)
-                ) / len(y)
+                mse = (len(y_left) * np.var(y_left) + len(y_right) * np.var(y_right)) / len(y)
 
                 if mse < best_score:
                     best_score = mse
@@ -264,43 +259,43 @@ class RandomForestLoadModel:
                     best_threshold = threshold
 
         if best_feature is None:
-            return {'leaf': True, 'value': np.mean(y)}
+            return {"leaf": True, "value": np.mean(y)}
 
         # Split and recurse
         left_mask = X[:, best_feature] < best_threshold
         right_mask = ~left_mask
 
         return {
-            'leaf': False,
-            'feature': best_feature,
-            'threshold': best_threshold,
-            'left': self._build_tree(X[left_mask], y[left_mask], depth + 1),
-            'right': self._build_tree(X[right_mask], y[right_mask], depth + 1),
+            "leaf": False,
+            "feature": best_feature,
+            "threshold": best_threshold,
+            "left": self._build_tree(X[left_mask], y[left_mask], depth + 1),
+            "right": self._build_tree(X[right_mask], y[right_mask], depth + 1),
         }
 
     def _predict_sample(self, x: np.ndarray, tree: Dict) -> float:
         """Predict for single sample"""
-        if tree['leaf']:
-            return tree['value']
+        if tree["leaf"]:
+            return tree["value"]
 
-        if x[tree['feature']] < tree['threshold']:
-            return self._predict_sample(x, tree['left'])
+        if x[tree["feature"]] < tree["threshold"]:
+            return self._predict_sample(x, tree["left"])
         else:
-            return self._predict_sample(x, tree['right'])
+            return self._predict_sample(x, tree["right"])
 
     def _calculate_feature_importance(self, X: np.ndarray, y: np.ndarray) -> np.ndarray:
         """Calculate feature importance based on usage"""
         importance = np.zeros(self.n_features)
 
         def get_importance(tree, depth=0):
-            if tree.get('leaf'):
+            if tree.get("leaf"):
                 return
 
-            feature = tree['feature']
+            feature = tree["feature"]
             importance[feature] += 1.0 / (depth + 1)
 
-            get_importance(tree['left'], depth + 1)
-            get_importance(tree['right'], depth + 1)
+            get_importance(tree["left"], depth + 1)
+            get_importance(tree["right"], depth + 1)
 
         for tree in self.trees:
             get_importance(tree)

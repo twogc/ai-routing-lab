@@ -3,28 +3,34 @@
 import logging
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple
+
 import numpy as np
+
 
 @dataclass
 class NNRouteSelection:
     """NN route selection"""
+
     selected_route: int
     probabilities: np.ndarray  # Softmax probabilities
     confidence: float
     top_routes: List[Tuple[int, float]]
 
+
 class NeuralNetworkRouteOptimizer:
     """Deep neural network for route optimization."""
 
-    def __init__(self, n_routes: int = 5, hidden_dim: int = 32, logger: Optional[logging.Logger] = None):
+    def __init__(
+        self, n_routes: int = 5, hidden_dim: int = 32, logger: Optional[logging.Logger] = None
+    ):
         self.n_routes = n_routes
         self.hidden_dim = hidden_dim
         self.logger = logger or logging.getLogger(__name__)
         self.weights1, self.weights2 = None, None
         self.fitted = False
-        self.metrics = {'accuracy': 0.0, 'total_predictions': 0}
+        self.metrics = {"accuracy": 0.0, "total_predictions": 0}
 
-    def fit(self, X: np.ndarray, y: np.ndarray, epochs: int = 10) -> 'NeuralNetworkRouteOptimizer':
+    def fit(self, X: np.ndarray, y: np.ndarray, epochs: int = 10) -> "NeuralNetworkRouteOptimizer":
         """Fit neural network"""
         X = X.astype(np.float32)
         y = y.astype(int)
@@ -60,7 +66,7 @@ class NeuralNetworkRouteOptimizer:
 
         predictions = np.argmax(probs, axis=1)
         confidences = np.max(probs, axis=1)
-        self.metrics['total_predictions'] += len(X)
+        self.metrics["total_predictions"] += len(X)
 
         return predictions, confidences
 
@@ -79,7 +85,7 @@ class NeuralNetworkRouteOptimizer:
             selected_route=int(preds[0]),
             probabilities=probs,
             confidence=float(np.max(probs)),
-            top_routes=[(r, float(p)) for r, p in top_routes]
+            top_routes=[(r, float(p)) for r, p in top_routes],
         )
 
     def score(self, X: np.ndarray, y: np.ndarray) -> float:
@@ -88,7 +94,7 @@ class NeuralNetworkRouteOptimizer:
         return np.mean(preds == y)
 
     def get_metrics(self) -> Dict[str, Any]:
-        return {**self.metrics, 'n_routes': self.n_routes, 'hidden_dim': self.hidden_dim}
+        return {**self.metrics, "n_routes": self.n_routes, "hidden_dim": self.hidden_dim}
 
     @staticmethod
     def _softmax(x: np.ndarray) -> np.ndarray:

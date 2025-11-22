@@ -15,6 +15,7 @@ import numpy as np
 @dataclass
 class LSTMPrediction:
     """Result of LSTM autoencoder prediction"""
+
     is_anomaly: bool
     reconstruction_error: float
     threshold: float
@@ -24,12 +25,7 @@ class LSTMPrediction:
 class SimpleNeuralNetwork:
     """Simplified neural network implementation for demonstration"""
 
-    def __init__(
-        self,
-        input_size: int,
-        hidden_sizes: List[int],
-        learning_rate: float = 0.01
-    ):
+    def __init__(self, input_size: int, hidden_sizes: List[int], learning_rate: float = 0.01):
         """
         Initialize simple feedforward network.
 
@@ -81,7 +77,7 @@ class LSTMAutoencoderModel:
         encoding_dim: int = 5,
         learning_rate: float = 0.001,
         threshold_percentile: float = 95,
-        logger: Optional[logging.Logger] = None
+        logger: Optional[logging.Logger] = None,
     ):
         """
         Initialize LSTM Autoencoder.
@@ -107,13 +103,13 @@ class LSTMAutoencoderModel:
         self.scaler_std = None
 
         self.metrics = {
-            'n_anomalies': 0,
-            'n_normal': 0,
-            'total_predictions': 0,
-            'mean_reconstruction_error': 0.0,
+            "n_anomalies": 0,
+            "n_normal": 0,
+            "total_predictions": 0,
+            "mean_reconstruction_error": 0.0,
         }
 
-    def fit(self, X: np.ndarray, epochs: int = 10) -> 'LSTMAutoencoderModel':
+    def fit(self, X: np.ndarray, epochs: int = 10) -> "LSTMAutoencoderModel":
         """
         Fit LSTM Autoencoder on data.
 
@@ -140,14 +136,14 @@ class LSTMAutoencoderModel:
         self.encoder = SimpleNeuralNetwork(
             input_size=n_features,
             hidden_sizes=[16, 8, self.encoding_dim],
-            learning_rate=self.learning_rate
+            learning_rate=self.learning_rate,
         )
 
         # Build decoder: encoding_dim -> n_features
         self.decoder = SimpleNeuralNetwork(
             input_size=self.encoding_dim,
             hidden_sizes=[8, 16, n_features],
-            learning_rate=self.learning_rate
+            learning_rate=self.learning_rate,
         )
 
         # Training: minimize reconstruction error
@@ -161,19 +157,16 @@ class LSTMAutoencoderModel:
 
             # Log progress
             if epoch % max(1, epochs // 3) == 0:
-                self.logger.debug(
-                    f"Epoch {epoch}/{epochs}, Mean Error: {np.mean(errors):.6f}"
-                )
+                self.logger.debug(f"Epoch {epoch}/{epochs}, Mean Error: {np.mean(errors):.6f}")
 
         # Calculate threshold on training data
         final_errors = np.mean((X_scaled - self._reconstruct(X_scaled)) ** 2, axis=1)
         self.threshold = np.percentile(final_errors, self.threshold_percentile)
-        self.metrics['mean_reconstruction_error'] = np.mean(final_errors)
+        self.metrics["mean_reconstruction_error"] = np.mean(final_errors)
 
         self.fitted = True
         self.logger.info(
-            f"LSTM Autoencoder fitted on {X.shape[0]} samples, "
-            f"threshold={self.threshold:.6f}"
+            f"LSTM Autoencoder fitted on {X.shape[0]} samples, " f"threshold={self.threshold:.6f}"
         )
 
         return self
@@ -206,9 +199,9 @@ class LSTMAutoencoderModel:
         predictions = (errors > self.threshold).astype(int)
 
         # Update metrics
-        self.metrics['total_predictions'] += len(X)
-        self.metrics['n_anomalies'] += np.sum(predictions)
-        self.metrics['n_normal'] += len(X) - np.sum(predictions)
+        self.metrics["total_predictions"] += len(X)
+        self.metrics["n_anomalies"] += np.sum(predictions)
+        self.metrics["n_normal"] += len(X) - np.sum(predictions)
 
         return predictions, errors
 
@@ -232,7 +225,7 @@ class LSTMAutoencoderModel:
             is_anomaly=bool(predictions[0]),
             reconstruction_error=float(errors[0]),
             threshold=float(self.threshold),
-            confidence=float(confidence)
+            confidence=float(confidence),
         )
 
     def score(self, X: np.ndarray, y: np.ndarray) -> float:
@@ -252,17 +245,17 @@ class LSTMAutoencoderModel:
 
     def get_metrics(self) -> Dict[str, Any]:
         """Get model metrics"""
-        total = self.metrics['total_predictions']
+        total = self.metrics["total_predictions"]
         if total > 0:
-            anomaly_rate = self.metrics['n_anomalies'] / total * 100
+            anomaly_rate = self.metrics["n_anomalies"] / total * 100
         else:
             anomaly_rate = 0
 
         return {
             **self.metrics,
-            'anomaly_rate_percent': anomaly_rate,
-            'encoding_dim': self.encoding_dim,
-            'sequence_length': self.sequence_length,
+            "anomaly_rate_percent": anomaly_rate,
+            "encoding_dim": self.encoding_dim,
+            "sequence_length": self.sequence_length,
         }
 
     def _reconstruct(self, X_scaled: np.ndarray) -> np.ndarray:
@@ -278,12 +271,9 @@ class LSTMAutoencoderEnsemble:
     def __init__(self, n_models: int = 3, **kwargs):
         """Initialize ensemble"""
         self.n_models = n_models
-        self.models = [
-            LSTMAutoencoderModel(**kwargs)
-            for _ in range(n_models)
-        ]
+        self.models = [LSTMAutoencoderModel(**kwargs) for _ in range(n_models)]
 
-    def fit(self, X: np.ndarray) -> 'LSTMAutoencoderEnsemble':
+    def fit(self, X: np.ndarray) -> "LSTMAutoencoderEnsemble":
         """Fit all models"""
         for model in self.models:
             model.fit(X)

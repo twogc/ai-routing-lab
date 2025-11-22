@@ -18,6 +18,7 @@ import numpy as np
 @dataclass
 class ValidationResult:
     """Result of model validation"""
+
     is_valid: bool
     model_id: str
     errors: List[str]
@@ -42,9 +43,9 @@ class ModelValidator:
 
     # Expected methods for different model types
     MODEL_INTERFACE = {
-        'anomaly': ['predict', 'fit', 'score'],
-        'prediction': ['predict', 'fit', 'score'],
-        'routing': ['predict', 'fit', 'score']
+        "anomaly": ["predict", "fit", "score"],
+        "prediction": ["predict", "fit", "score"],
+        "routing": ["predict", "fit", "score"],
     }
 
     # Performance thresholds
@@ -69,7 +70,7 @@ class ModelValidator:
         model_type: str,
         expected_accuracy: float,
         input_shape: Optional[List[int]] = None,
-        output_shape: Optional[List[int]] = None
+        output_shape: Optional[List[int]] = None,
     ) -> ValidationResult:
         """
         Perform comprehensive model validation.
@@ -107,18 +108,18 @@ class ModelValidator:
                 f"Accuracy {expected_accuracy:.4f} below recommended minimum "
                 f"{self.MIN_ACCURACY:.4f}"
             )
-        metrics['accuracy'] = expected_accuracy
+        metrics["accuracy"] = expected_accuracy
 
         # Validate shapes if provided
         if input_shape is not None:
             try:
                 self._validate_shape(model, input_shape, "input")
-                metrics['input_shape'] = input_shape
+                metrics["input_shape"] = input_shape
             except ValueError as e:
                 warnings.append(f"Input shape validation: {e}")
 
         if output_shape is not None:
-            metrics['output_shape'] = output_shape
+            metrics["output_shape"] = output_shape
 
         # Check model attributes
         self._validate_attributes(model, metrics, warnings, errors)
@@ -136,26 +137,20 @@ class ModelValidator:
             errors=errors,
             warnings=warnings,
             metrics=metrics,
-            validation_timestamp=self._get_timestamp()
+            validation_timestamp=self._get_timestamp(),
         )
 
         if is_valid:
-            self.logger.info(
-                f"✓ Model {model_id} ({model_type}) validation successful"
-            )
+            self.logger.info(f"✓ Model {model_id} ({model_type}) validation successful")
         else:
-            self.logger.error(
-                f"✗ Model {model_id} validation failed with {len(errors)} error(s)"
-            )
+            self.logger.error(f"✗ Model {model_id} validation failed with {len(errors)} error(s)")
             for error in errors:
                 self.logger.error(f"  - {error}")
 
         return result
 
     def validate_file(
-        self,
-        file_path: str,
-        expected_checksum: Optional[str] = None
+        self, file_path: str, expected_checksum: Optional[str] = None
     ) -> Tuple[bool, str]:
         """
         Validate model file integrity.
@@ -202,7 +197,7 @@ class ModelValidator:
         """
         errors = []
         warnings = []
-        metrics = {'models': {}}
+        metrics = {"models": {}}
 
         if not models:
             errors.append("Ensemble contains no models")
@@ -210,20 +205,15 @@ class ModelValidator:
         # Validate weights sum to 1.0
         total_weight = sum(weight for _, weight in models.values())
         if abs(total_weight - 1.0) > 0.01:
-            warnings.append(
-                f"Ensemble weights sum to {total_weight:.4f}, expected 1.0"
-            )
+            warnings.append(f"Ensemble weights sum to {total_weight:.4f}, expected 1.0")
 
         # Validate each model can predict
         for model_id, (model, weight) in models.items():
             try:
-                if not callable(getattr(model, 'predict', None)):
+                if not callable(getattr(model, "predict", None)):
                     errors.append(f"Model {model_id} missing predict method")
                 else:
-                    metrics['models'][model_id] = {
-                        'weight': weight,
-                        'has_predict': True
-                    }
+                    metrics["models"][model_id] = {"weight": weight, "has_predict": True}
             except Exception as e:
                 errors.append(f"Failed to validate model {model_id}: {e}")
 
@@ -235,14 +225,14 @@ class ModelValidator:
             errors=errors,
             warnings=warnings,
             metrics=metrics,
-            validation_timestamp=self._get_timestamp()
+            validation_timestamp=self._get_timestamp(),
         )
 
     @staticmethod
     def _validate_shape(model: Any, expected_shape: List[int], shape_type: str):
         """Validate that model can handle expected shape"""
         # For sklearn models, check n_features_in_
-        if hasattr(model, 'n_features_in_'):
+        if hasattr(model, "n_features_in_"):
             actual = model.n_features_in_
             expected = expected_shape[0] if expected_shape else 1
 
@@ -253,62 +243,51 @@ class ModelValidator:
                 )
 
     @staticmethod
-    def _validate_attributes(
-        model: Any,
-        metrics: Dict,
-        warnings: List[str],
-        errors: List[str]
-    ):
+    def _validate_attributes(model: Any, metrics: Dict, warnings: List[str], errors: List[str]):
         """Validate model attributes"""
         # Check for common sklearn attributes
-        if hasattr(model, 'classes_'):
-            metrics['n_classes'] = len(model.classes_)
+        if hasattr(model, "classes_"):
+            metrics["n_classes"] = len(model.classes_)
 
-        if hasattr(model, 'n_features_in_'):
-            metrics['n_features'] = model.n_features_in_
+        if hasattr(model, "n_features_in_"):
+            metrics["n_features"] = model.n_features_in_
 
-        if hasattr(model, 'feature_names_in_'):
-            metrics['feature_names'] = list(model.feature_names_in_)
+        if hasattr(model, "feature_names_in_"):
+            metrics["feature_names"] = list(model.feature_names_in_)
 
     @staticmethod
     def _validate_signature(model: Any, model_type: str, errors: List[str]):
         """Validate model method signatures"""
-        if hasattr(model, 'predict'):
+        if hasattr(model, "predict"):
             try:
                 sig = inspect.signature(model.predict)
                 params = list(sig.parameters.keys())
 
                 # Should have at least 'self' and data parameter
                 if len(params) < 2:
-                    errors.append(
-                        f"Model predict method signature invalid: {sig}"
-                    )
+                    errors.append(f"Model predict method signature invalid: {sig}")
             except Exception as e:
                 errors.append(f"Failed to inspect predict signature: {e}")
 
     @staticmethod
     def _test_predictions(
-        model: Any,
-        model_type: str,
-        metrics: Dict,
-        warnings: List[str],
-        errors: List[str]
+        model: Any, model_type: str, metrics: Dict, warnings: List[str], errors: List[str]
     ):
         """Test that model can make predictions"""
         try:
             # Create minimal test data
-            if model_type == 'anomaly':
+            if model_type == "anomaly":
                 test_data = np.random.randn(1, 5)  # 1 sample, 5 features
-            elif model_type == 'prediction':
+            elif model_type == "prediction":
                 test_data = np.random.randn(1, 10)  # 1 sample, 10 features
             else:  # routing
                 test_data = np.random.randn(1, 8)  # 1 sample, 8 features
 
             # Try prediction
-            if hasattr(model, 'predict'):
+            if hasattr(model, "predict"):
                 result = model.predict(test_data)
-                metrics['test_prediction_shape'] = list(np.array(result).shape)
-                metrics['test_prediction_dtype'] = str(np.array(result).dtype)
+                metrics["test_prediction_shape"] = list(np.array(result).shape)
+                metrics["test_prediction_dtype"] = str(np.array(result).dtype)
             else:
                 warnings.append("Model does not have predict method")
 
@@ -319,8 +298,8 @@ class ModelValidator:
     def _calculate_checksum(file_path: str) -> str:
         """Calculate SHA-256 checksum"""
         sha256 = hashlib.sha256()
-        with open(file_path, 'rb') as f:
-            for block in iter(lambda: f.read(65536), b''):
+        with open(file_path, "rb") as f:
+            for block in iter(lambda: f.read(65536), b""):
                 sha256.update(block)
         return sha256.hexdigest()
 
@@ -328,6 +307,7 @@ class ModelValidator:
     def _get_timestamp() -> str:
         """Get current timestamp"""
         from datetime import datetime
+
         return datetime.now().isoformat()
 
 
@@ -350,6 +330,6 @@ class ModelSignature:
 
     def get_expected_shape(self) -> Optional[Tuple[int, ...]]:
         """Get expected input shape"""
-        if hasattr(self.model, 'n_features_in_'):
+        if hasattr(self.model, "n_features_in_"):
             return (1, self.model.n_features_in_)
         return None

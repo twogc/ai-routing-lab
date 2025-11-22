@@ -1,6 +1,6 @@
 """Setup script for AI Routing Lab."""
 
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
@@ -10,7 +10,7 @@ with open("requirements.txt", "r", encoding="utf-8") as fh:
 
 setup(
     name="ai-routing-lab",
-    version="0.1.0",
+    version="0.2.1",
     author="2GC CloudBridge",
     author_email="info@cloudbridge-research.ru",
     description="Predictive Route Selection using Machine Learning for Latency/Jitter Optimization",
@@ -47,4 +47,3 @@ setup(
         ],
     },
 )
-

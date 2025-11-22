@@ -15,6 +15,7 @@ import numpy as np
 @dataclass
 class TimeSeriesPrediction:
     """Result of time series prediction"""
+
     predictions: np.ndarray  # Array of predictions
     confidence_intervals: Tuple[np.ndarray, np.ndarray]  # (lower, upper)
     uncertainty: np.ndarray  # Std dev for each prediction
@@ -37,7 +38,7 @@ class LSTMForecastModel:
         sequence_length: int = 10,
         forecast_horizon: int = 1,
         hidden_dim: int = 32,
-        logger: Optional[logging.Logger] = None
+        logger: Optional[logging.Logger] = None,
     ):
         """
         Initialize LSTM Forecast model.
@@ -59,13 +60,13 @@ class LSTMForecastModel:
         self.scaler_std = None
 
         self.metrics = {
-            'mse': 0.0,
-            'rmse': 0.0,
-            'mae': 0.0,
-            'r_squared': 0.0,
+            "mse": 0.0,
+            "rmse": 0.0,
+            "mae": 0.0,
+            "r_squared": 0.0,
         }
 
-    def fit(self, X: np.ndarray, y: np.ndarray) -> 'LSTMForecastModel':
+    def fit(self, X: np.ndarray, y: np.ndarray) -> "LSTMForecastModel":
         """
         Fit LSTM on time series data.
 
@@ -103,13 +104,13 @@ class LSTMForecastModel:
         # Calculate metrics
         predictions = self.predict(X)[0]
         mse = np.mean((y - predictions) ** 2)
-        self.metrics['mse'] = mse
-        self.metrics['rmse'] = np.sqrt(mse)
-        self.metrics['mae'] = np.mean(np.abs(y - predictions))
+        self.metrics["mse"] = mse
+        self.metrics["rmse"] = np.sqrt(mse)
+        self.metrics["mae"] = np.mean(np.abs(y - predictions))
 
         ss_res = np.sum((y - predictions) ** 2)
         ss_tot = np.sum((y - np.mean(y)) ** 2)
-        self.metrics['r_squared'] = 1 - (ss_res / ss_tot) if ss_tot > 0 else 0
+        self.metrics["r_squared"] = 1 - (ss_res / ss_tot) if ss_tot > 0 else 0
 
         self.fitted = True
         self.logger.info(
@@ -187,7 +188,7 @@ class LSTMForecastModel:
         """Get model metrics"""
         return {
             **self.metrics,
-            'sequence_length': self.sequence_length,
-            'forecast_horizon': self.forecast_horizon,
-            'hidden_dim': self.hidden_dim,
+            "sequence_length": self.sequence_length,
+            "forecast_horizon": self.forecast_horizon,
+            "hidden_dim": self.hidden_dim,
         }

@@ -3,12 +3,15 @@
 import logging
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
+
 import numpy as np
+
 
 @dataclass
 class RetrainingJob:
     """Retraining job metadata"""
+
     job_id: str
     model_id: str
     trigger_reason: str  # 'scheduled', 'drift_detected', 'performance_degradation'
@@ -18,6 +21,7 @@ class RetrainingJob:
     accuracy_improvement: Optional[float] = None
     training_samples: int = 0
     duration_seconds: float = 0.0
+
 
 class RetrainingOrchestrator:
     """
@@ -37,7 +41,7 @@ class RetrainingOrchestrator:
         retraining_interval_hours: int = 24,
         drift_threshold: float = 0.05,
         performance_threshold: float = 0.05,
-        logger: Optional[logging.Logger] = None
+        logger: Optional[logging.Logger] = None,
     ):
         self.retraining_interval_hours = retraining_interval_hours
         self.drift_threshold = drift_threshold
@@ -49,10 +53,7 @@ class RetrainingOrchestrator:
         self.active_jobs = {}  # model_id -> job_id
 
     def schedule_retraining(
-        self,
-        model_id: str,
-        trigger_reason: str = 'scheduled',
-        immediate: bool = False
+        self, model_id: str, trigger_reason: str = "scheduled", immediate: bool = False
     ) -> Optional[str]:
         """
         Schedule a retraining job.
@@ -76,9 +77,7 @@ class RetrainingOrchestrator:
             next_time = last_time + timedelta(hours=self.retraining_interval_hours)
 
             if datetime.now() < next_time:
-                self.logger.debug(
-                    f"Model {model_id} not due for retraining. Next: {next_time}"
-                )
+                self.logger.debug(f"Model {model_id} not due for retraining. Next: {next_time}")
                 return None
 
         # Create retraining job
@@ -88,7 +87,7 @@ class RetrainingOrchestrator:
             model_id=model_id,
             trigger_reason=trigger_reason,
             start_time=datetime.now().isoformat(),
-            status="pending"
+            status="pending",
         )
 
         self.jobs.append(job)
@@ -106,7 +105,7 @@ class RetrainingOrchestrator:
         X_train: np.ndarray,
         y_train: np.ndarray,
         X_val: Optional[np.ndarray] = None,
-        y_val: Optional[np.ndarray] = None
+        y_val: Optional[np.ndarray] = None,
     ) -> Dict[str, Any]:
         """
         Execute retraining job.
@@ -151,21 +150,17 @@ class RetrainingOrchestrator:
             )
 
             return {
-                'job_id': job_id,
-                'status': 'completed',
-                'accuracy_improvement': job.accuracy_improvement,
-                'duration_seconds': job.duration_seconds,
-                'training_samples': job.training_samples,
+                "job_id": job_id,
+                "status": "completed",
+                "accuracy_improvement": job.accuracy_improvement,
+                "duration_seconds": job.duration_seconds,
+                "training_samples": job.training_samples,
             }
 
         except Exception as e:
             job.status = "failed"
             self.logger.error(f"Retraining {job_id} failed: {e}")
-            return {
-                'job_id': job_id,
-                'status': 'failed',
-                'error': str(e)
-            }
+            return {"job_id": job_id, "status": "failed", "error": str(e)}
 
         finally:
             # Update last retraining time
@@ -173,11 +168,7 @@ class RetrainingOrchestrator:
             if job.model_id in self.active_jobs:
                 del self.active_jobs[job.model_id]
 
-    def should_retrain_on_drift(
-        self,
-        model_id: str,
-        drift_score: float
-    ) -> bool:
+    def should_retrain_on_drift(self, model_id: str, drift_score: float) -> bool:
         """
         Determine if model should be retrained based on drift.
 
@@ -199,10 +190,7 @@ class RetrainingOrchestrator:
         return should_retrain
 
     def should_retrain_on_performance(
-        self,
-        model_id: str,
-        current_accuracy: float,
-        baseline_accuracy: float
+        self, model_id: str, current_accuracy: float, baseline_accuracy: float
     ) -> bool:
         """
         Determine if model should be retrained based on performance.
@@ -233,20 +221,18 @@ class RetrainingOrchestrator:
             return None
 
         return {
-            'job_id': job.job_id,
-            'model_id': job.model_id,
-            'status': job.status,
-            'trigger_reason': job.trigger_reason,
-            'start_time': job.start_time,
-            'end_time': job.end_time,
-            'accuracy_improvement': job.accuracy_improvement,
-            'duration_seconds': job.duration_seconds,
+            "job_id": job.job_id,
+            "model_id": job.model_id,
+            "status": job.status,
+            "trigger_reason": job.trigger_reason,
+            "start_time": job.start_time,
+            "end_time": job.end_time,
+            "accuracy_improvement": job.accuracy_improvement,
+            "duration_seconds": job.duration_seconds,
         }
 
     def get_retraining_history(
-        self,
-        model_id: Optional[str] = None,
-        limit: int = 10
+        self, model_id: Optional[str] = None, limit: int = 10
     ) -> List[Dict[str, Any]]:
         """Get retraining history"""
         jobs = self.jobs
@@ -257,33 +243,39 @@ class RetrainingOrchestrator:
 
         return [
             {
-                'job_id': j.job_id,
-                'model_id': j.model_id,
-                'status': j.status,
-                'trigger_reason': j.trigger_reason,
-                'start_time': j.start_time,
-                'accuracy_improvement': j.accuracy_improvement,
+                "job_id": j.job_id,
+                "model_id": j.model_id,
+                "status": j.status,
+                "trigger_reason": j.trigger_reason,
+                "start_time": j.start_time,
+                "accuracy_improvement": j.accuracy_improvement,
             }
             for j in jobs
         ]
 
     def get_metrics(self) -> Dict[str, Any]:
         """Get orchestrator metrics"""
-        completed_jobs = [j for j in self.jobs if j.status == 'completed']
-        failed_jobs = [j for j in self.jobs if j.status == 'failed']
+        completed_jobs = [j for j in self.jobs if j.status == "completed"]
+        failed_jobs = [j for j in self.jobs if j.status == "failed"]
 
         avg_improvement = (
-            np.mean([j.accuracy_improvement for j in completed_jobs
-                    if j.accuracy_improvement is not None])
-            if completed_jobs else 0
+            np.mean(
+                [
+                    j.accuracy_improvement
+                    for j in completed_jobs
+                    if j.accuracy_improvement is not None
+                ]
+            )
+            if completed_jobs
+            else 0
         )
 
         return {
-            'total_jobs': len(self.jobs),
-            'completed_jobs': len(completed_jobs),
-            'failed_jobs': len(failed_jobs),
-            'active_jobs': len(self.active_jobs),
-            'average_accuracy_improvement': avg_improvement,
+            "total_jobs": len(self.jobs),
+            "completed_jobs": len(completed_jobs),
+            "failed_jobs": len(failed_jobs),
+            "active_jobs": len(self.active_jobs),
+            "average_accuracy_improvement": avg_improvement,
         }
 
     def _get_job(self, job_id: str) -> Optional[RetrainingJob]:

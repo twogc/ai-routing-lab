@@ -7,7 +7,7 @@ Fast, efficient, and effective for high-dimensional data.
 
 import logging
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 import numpy as np
 
@@ -15,6 +15,7 @@ import numpy as np
 @dataclass
 class AnomalyPrediction:
     """Result of anomaly detection prediction"""
+
     is_anomaly: bool
     confidence: float  # 0.0 to 1.0
     anomaly_score: float  # Raw score from model
@@ -39,7 +40,7 @@ class IsolationForestModel:
         sample_size: int = 256,
         contamination: float = 0.1,
         random_state: Optional[int] = None,
-        logger: Optional[logging.Logger] = None
+        logger: Optional[logging.Logger] = None,
     ):
         """
         Initialize Isolation Forest model.
@@ -63,12 +64,12 @@ class IsolationForestModel:
         self.fitted = False
 
         self.metrics = {
-            'n_anomalies': 0,
-            'n_normal': 0,
-            'total_predictions': 0,
+            "n_anomalies": 0,
+            "n_normal": 0,
+            "total_predictions": 0,
         }
 
-    def fit(self, X: np.ndarray) -> 'IsolationForestModel':
+    def fit(self, X: np.ndarray) -> "IsolationForestModel":
         """
         Fit Isolation Forest on data.
 
@@ -123,17 +124,15 @@ class IsolationForestModel:
             raise RuntimeError("Model must be fitted before predict")
 
         if X.shape[1] != self.n_features:
-            raise ValueError(
-                f"Expected {self.n_features} features, got {X.shape[1]}"
-            )
+            raise ValueError(f"Expected {self.n_features} features, got {X.shape[1]}")
 
         scores = self._score_samples(X)
         predictions = (scores > self.thresholds).astype(int)
 
         # Update metrics
-        self.metrics['total_predictions'] += len(X)
-        self.metrics['n_anomalies'] += np.sum(predictions)
-        self.metrics['n_normal'] += len(X) - np.sum(predictions)
+        self.metrics["total_predictions"] += len(X)
+        self.metrics["n_anomalies"] += np.sum(predictions)
+        self.metrics["n_normal"] += len(X) - np.sum(predictions)
 
         return predictions, scores
 
@@ -157,7 +156,7 @@ class IsolationForestModel:
             is_anomaly=bool(predictions[0]),
             confidence=float(confidence),
             anomaly_score=float(scores[0]),
-            sample_index=0
+            sample_index=0,
         )
 
     def score(self, X: np.ndarray, y: np.ndarray) -> float:
@@ -177,18 +176,18 @@ class IsolationForestModel:
 
     def get_metrics(self) -> Dict[str, Any]:
         """Get model metrics"""
-        total = self.metrics['total_predictions']
+        total = self.metrics["total_predictions"]
         if total > 0:
-            anomaly_rate = self.metrics['n_anomalies'] / total * 100
+            anomaly_rate = self.metrics["n_anomalies"] / total * 100
         else:
             anomaly_rate = 0
 
         return {
             **self.metrics,
-            'anomaly_rate_percent': anomaly_rate,
-            'n_trees': self.n_trees,
-            'sample_size': self.sample_size,
-            'threshold': self.thresholds,
+            "anomaly_rate_percent": anomaly_rate,
+            "n_trees": self.n_trees,
+            "sample_size": self.sample_size,
+            "threshold": self.thresholds,
         }
 
     def _score_samples(self, X: np.ndarray) -> np.ndarray:
@@ -232,7 +231,7 @@ class IsolationForestModel:
     def _build_tree(self, X: np.ndarray, depth: int, max_depth: int = 10) -> Dict:
         """Build a single isolation tree"""
         if depth >= max_depth or len(X) <= 1:
-            return {'leaf': True, 'size': len(X)}
+            return {"leaf": True, "size": len(X)}
 
         # Randomly select feature and split value
         feat = np.random.randint(0, self.n_features)
@@ -245,26 +244,26 @@ class IsolationForestModel:
 
         # Stop if no split
         if len(X_left) == 0 or len(X_right) == 0:
-            return {'leaf': True, 'size': len(X)}
+            return {"leaf": True, "size": len(X)}
 
         # Recursively build subtrees
         return {
-            'leaf': False,
-            'feature': feat,
-            'threshold': split_val,
-            'left': self._build_tree(X_left, depth + 1, max_depth),
-            'right': self._build_tree(X_right, depth + 1, max_depth),
+            "leaf": False,
+            "feature": feat,
+            "threshold": split_val,
+            "left": self._build_tree(X_left, depth + 1, max_depth),
+            "right": self._build_tree(X_right, depth + 1, max_depth),
         }
 
     def _get_path_length(self, x: np.ndarray, tree: Dict, depth: int) -> int:
         """Get path length for sample in tree"""
-        if tree.get('leaf'):
-            return depth + self._c(tree.get('size', 1))
+        if tree.get("leaf"):
+            return depth + self._c(tree.get("size", 1))
 
-        if x[tree['feature']] < tree['threshold']:
-            return self._get_path_length(x, tree['left'], depth + 1)
+        if x[tree["feature"]] < tree["threshold"]:
+            return self._get_path_length(x, tree["left"], depth + 1)
         else:
-            return self._get_path_length(x, tree['right'], depth + 1)
+            return self._get_path_length(x, tree["right"], depth + 1)
 
     @staticmethod
     def _c(n: int) -> float:
@@ -280,12 +279,9 @@ class IsolationForestEnsemble:
     def __init__(self, n_models: int = 3, **kwargs):
         """Initialize ensemble of Isolation Forests"""
         self.n_models = n_models
-        self.models = [
-            IsolationForestModel(**kwargs)
-            for _ in range(n_models)
-        ]
+        self.models = [IsolationForestModel(**kwargs) for _ in range(n_models)]
 
-    def fit(self, X: np.ndarray) -> 'IsolationForestEnsemble':
+    def fit(self, X: np.ndarray) -> "IsolationForestEnsemble":
         """Fit all models"""
         for model in self.models:
             model.fit(X)

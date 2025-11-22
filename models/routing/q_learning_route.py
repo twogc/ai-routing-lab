@@ -2,15 +2,19 @@
 
 import logging
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Optional
+
 import numpy as np
+
 
 @dataclass
 class QLearningDecision:
     """Q-Learning decision"""
+
     selected_route: int
     q_values: Dict[int, float]
     expected_reward: float
+
 
 class QLearningRouter:
     """Q-Learning for adaptive route optimization."""
@@ -21,7 +25,7 @@ class QLearningRouter:
         n_states: int = 10,
         learning_rate: float = 0.1,
         discount_factor: float = 0.9,
-        logger: Optional[logging.Logger] = None
+        logger: Optional[logging.Logger] = None,
     ):
         self.n_routes = n_routes
         self.n_states = n_states
@@ -34,7 +38,7 @@ class QLearningRouter:
         self.fitted = False
         self.total_updates = 0
 
-    def fit(self, X: np.ndarray, y: np.ndarray, epochs: int = 10) -> 'QLearningRouter':
+    def fit(self, X: np.ndarray, y: np.ndarray, epochs: int = 10) -> "QLearningRouter":
         """Train Q-Learning on historical data"""
         X = X.astype(np.float32)
         y = y.astype(int)
@@ -70,8 +74,8 @@ class QLearningRouter:
         if not self.fitted:
             return QLearningDecision(
                 selected_route=0,
-                q_values={i: 0.0 for i in range(self.n_routes)},
-                expected_reward=0.0
+                q_values=dict.fromkeys(range(self.n_routes), 0.0),
+                expected_reward=0.0,
             )
 
         state = self._discretize_state(x)
@@ -85,7 +89,7 @@ class QLearningRouter:
         return QLearningDecision(
             selected_route=selected_route,
             q_values={i: float(q_values[i]) for i in range(self.n_routes)},
-            expected_reward=float(np.max(q_values))
+            expected_reward=float(np.max(q_values)),
         )
 
     def update(self, x: np.ndarray, action: int, reward: float):
@@ -100,11 +104,11 @@ class QLearningRouter:
 
     def get_metrics(self) -> Dict[str, Any]:
         return {
-            'n_routes': self.n_routes,
-            'n_states': self.n_states,
-            'total_updates': self.total_updates,
-            'learning_rate': self.learning_rate,
-            'mean_q_value': float(np.mean(self.q_table))
+            "n_routes": self.n_routes,
+            "n_states": self.n_states,
+            "total_updates": self.total_updates,
+            "learning_rate": self.learning_rate,
+            "mean_q_value": float(np.mean(self.q_table)),
         }
 
     def _discretize_state(self, x: np.ndarray) -> int:

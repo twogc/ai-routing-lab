@@ -7,7 +7,7 @@ Works well in high-dimensional spaces.
 
 import logging
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 import numpy as np
 
@@ -15,6 +15,7 @@ import numpy as np
 @dataclass
 class SVMAnomalyPrediction:
     """Result of One-Class SVM prediction"""
+
     is_anomaly: bool
     decision_function: float  # Raw decision value
     confidence: float  # 0.0 to 1.0
@@ -34,11 +35,11 @@ class OneClassSVMModel:
 
     def __init__(
         self,
-        kernel: str = 'rbf',
-        gamma: float = 'auto',
+        kernel: str = "rbf",
+        gamma: float = "auto",
         nu: float = 0.05,
         C: float = 1.0,
-        logger: Optional[logging.Logger] = None
+        logger: Optional[logging.Logger] = None,
     ):
         """
         Initialize One-Class SVM model.
@@ -64,13 +65,13 @@ class OneClassSVMModel:
         self.scaler_std = None
 
         self.metrics = {
-            'n_anomalies': 0,
-            'n_normal': 0,
-            'total_predictions': 0,
-            'n_support_vectors': 0,
+            "n_anomalies": 0,
+            "n_normal": 0,
+            "total_predictions": 0,
+            "n_support_vectors": 0,
         }
 
-    def fit(self, X: np.ndarray) -> 'OneClassSVMModel':
+    def fit(self, X: np.ndarray) -> "OneClassSVMModel":
         """
         Fit One-Class SVM on data.
 
@@ -93,7 +94,7 @@ class OneClassSVMModel:
         n_samples = X_scaled.shape[0]
 
         # Calculate gamma if 'auto'
-        if self.gamma == 'auto':
+        if self.gamma == "auto":
             gamma = 1.0 / X_scaled.shape[1]
         else:
             gamma = self.gamma
@@ -111,7 +112,7 @@ class OneClassSVMModel:
         self.bias = np.percentile(scores, (1 - self.nu) * 100)
 
         self.fitted = True
-        self.metrics['n_support_vectors'] = len(self.support_vectors)
+        self.metrics["n_support_vectors"] = len(self.support_vectors)
 
         self.logger.info(
             f"One-Class SVM fitted on {n_samples} samples, "
@@ -141,7 +142,7 @@ class OneClassSVMModel:
         X_scaled = (X - self.scaler_mean) / self.scaler_std
 
         # Calculate gamma
-        if self.gamma == 'auto':
+        if self.gamma == "auto":
             gamma = 1.0 / X_scaled.shape[1]
         else:
             gamma = self.gamma
@@ -154,9 +155,9 @@ class OneClassSVMModel:
         predictions = (decision_functions < 0).astype(int)
 
         # Update metrics
-        self.metrics['total_predictions'] += len(X)
-        self.metrics['n_anomalies'] += np.sum(predictions)
-        self.metrics['n_normal'] += len(X) - np.sum(predictions)
+        self.metrics["total_predictions"] += len(X)
+        self.metrics["n_anomalies"] += np.sum(predictions)
+        self.metrics["n_normal"] += len(X) - np.sum(predictions)
 
         return predictions, decision_functions
 
@@ -180,7 +181,7 @@ class OneClassSVMModel:
             is_anomaly=bool(predictions[0]),
             decision_function=float(decisions[0]),
             confidence=float(confidence),
-            distance_to_hyperplane=float(np.abs(decisions[0]))
+            distance_to_hyperplane=float(np.abs(decisions[0])),
         )
 
     def score(self, X: np.ndarray, y: np.ndarray) -> float:
@@ -205,27 +206,22 @@ class OneClassSVMModel:
 
     def get_metrics(self) -> Dict[str, Any]:
         """Get model metrics"""
-        total = self.metrics['total_predictions']
+        total = self.metrics["total_predictions"]
         if total > 0:
-            anomaly_rate = self.metrics['n_anomalies'] / total * 100
+            anomaly_rate = self.metrics["n_anomalies"] / total * 100
         else:
             anomaly_rate = 0
 
         return {
             **self.metrics,
-            'anomaly_rate_percent': anomaly_rate,
-            'kernel': self.kernel,
-            'gamma': self.gamma,
-            'nu': self.nu,
-            'bias': self.bias,
+            "anomaly_rate_percent": anomaly_rate,
+            "kernel": self.kernel,
+            "gamma": self.gamma,
+            "nu": self.nu,
+            "bias": self.bias,
         }
 
-    def _kernel_matrix(
-        self,
-        X1: np.ndarray,
-        X2: np.ndarray,
-        gamma: float
-    ) -> np.ndarray:
+    def _kernel_matrix(self, X1: np.ndarray, X2: np.ndarray, gamma: float) -> np.ndarray:
         """
         Calculate kernel matrix between two data matrices.
 
@@ -237,17 +233,17 @@ class OneClassSVMModel:
         Returns:
             Kernel matrix (len(X1), len(X2))
         """
-        if self.kernel == 'linear':
+        if self.kernel == "linear":
             return np.dot(X1, X2.T)
 
-        elif self.kernel == 'rbf':
+        elif self.kernel == "rbf":
             # RBF kernel: exp(-gamma * ||x1 - x2||^2)
             sq_distances = np.zeros((len(X1), len(X2)))
             for i, x1 in enumerate(X1):
                 sq_distances[i] = np.sum((X2 - x1) ** 2, axis=1)
             return np.exp(-gamma * sq_distances)
 
-        elif self.kernel == 'poly':
+        elif self.kernel == "poly":
             # Polynomial kernel: (gamma * x1·x2 + 1)^3
             return (gamma * np.dot(X1, X2.T) + 1) ** 3
 
@@ -261,12 +257,9 @@ class OneClassSVMEnsemble:
     def __init__(self, n_models: int = 3, **kwargs):
         """Initialize ensemble"""
         self.n_models = n_models
-        self.models = [
-            OneClassSVMModel(**kwargs)
-            for _ in range(n_models)
-        ]
+        self.models = [OneClassSVMModel(**kwargs) for _ in range(n_models)]
 
-    def fit(self, X: np.ndarray) -> 'OneClassSVMEnsemble':
+    def fit(self, X: np.ndarray) -> "OneClassSVMEnsemble":
         """Fit all models"""
         for model in self.models:
             model.fit(X)

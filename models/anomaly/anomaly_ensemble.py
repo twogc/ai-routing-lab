@@ -10,7 +10,7 @@ Combined Accuracy: ~0.96
 
 import logging
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 import numpy as np
 
@@ -22,6 +22,7 @@ from .one_class_svm import OneClassSVMModel
 @dataclass
 class EnsembleAnomalyPrediction:
     """Result of ensemble anomaly detection"""
+
     is_anomaly: bool
     consensus_score: float  # 0.0 to 1.0
     voting_results: Dict[str, float]  # model_name -> prediction_score
@@ -53,7 +54,7 @@ class AnomalyEnsemble:
         svm_weight: float = 0.25,
         lstm_weight: float = 0.50,
         consensus_threshold: float = 0.5,
-        logger: Optional[logging.Logger] = None
+        logger: Optional[logging.Logger] = None,
     ):
         """
         Initialize Anomaly Ensemble.
@@ -74,9 +75,7 @@ class AnomalyEnsemble:
         # Validate weights sum to 1
         total_weight = if_weight + svm_weight + lstm_weight
         if abs(total_weight - 1.0) > 0.01:
-            self.logger.warning(
-                f"Weights don't sum to 1.0: {total_weight:.4f}, normalizing"
-            )
+            self.logger.warning(f"Weights don't sum to 1.0: {total_weight:.4f}, normalizing")
             self.if_weight /= total_weight
             self.svm_weight /= total_weight
             self.lstm_weight /= total_weight
@@ -88,13 +87,13 @@ class AnomalyEnsemble:
 
         self.fitted = False
         self.metrics = {
-            'total_predictions': 0,
-            'anomalies_detected': 0,
-            'high_confidence_anomalies': 0,
-            'model_disagreements': 0,
+            "total_predictions": 0,
+            "anomalies_detected": 0,
+            "high_confidence_anomalies": 0,
+            "model_disagreements": 0,
         }
 
-    def fit(self, X: np.ndarray) -> 'AnomalyEnsemble':
+    def fit(self, X: np.ndarray) -> "AnomalyEnsemble":
         """
         Fit all ensemble models.
 
@@ -148,26 +147,24 @@ class AnomalyEnsemble:
 
         # Weighted consensus
         consensus_scores = (
-            self.if_weight * if_scores_norm +
-            self.svm_weight * svm_scores_norm +
-            self.lstm_weight * lstm_scores_norm
+            self.if_weight * if_scores_norm
+            + self.svm_weight * svm_scores_norm
+            + self.lstm_weight * lstm_scores_norm
         )
 
         # Predictions
         predictions = (consensus_scores > self.consensus_threshold).astype(int)
 
         # Update metrics
-        self.metrics['total_predictions'] += len(X)
-        self.metrics['anomalies_detected'] += np.sum(predictions)
+        self.metrics["total_predictions"] += len(X)
+        self.metrics["anomalies_detected"] += np.sum(predictions)
 
         # Count high-confidence anomalies (all models agree)
         all_agree = (if_preds == svm_preds) & (svm_preds == lstm_preds)
-        self.metrics['high_confidence_anomalies'] += np.sum(
-            all_agree & (predictions == 1)
-        )
+        self.metrics["high_confidence_anomalies"] += np.sum(all_agree & (predictions == 1))
 
         # Count disagreements
-        self.metrics['model_disagreements'] += len(X) - np.sum(all_agree)
+        self.metrics["model_disagreements"] += len(X) - np.sum(all_agree)
 
         return predictions, consensus_scores
 
@@ -190,9 +187,9 @@ class AnomalyEnsemble:
         lstm_pred = self.lstm_model.predict_sample(x.flatten())
 
         voting_results = {
-            'isolation_forest': if_pred.confidence,
-            'one_class_svm': svm_pred.confidence,
-            'lstm_autoencoder': lstm_pred.confidence,
+            "isolation_forest": if_pred.confidence,
+            "one_class_svm": svm_pred.confidence,
+            "lstm_autoencoder": lstm_pred.confidence,
         }
 
         # Calculate model agreement
@@ -204,7 +201,7 @@ class AnomalyEnsemble:
             consensus_score=float(consensus[0]),
             voting_results=voting_results,
             confidence=float(consensus[0]),
-            model_agreement_percent=agreement * 100
+            model_agreement_percent=agreement * 100,
         )
 
     def score(self, X: np.ndarray, y: np.ndarray) -> float:
@@ -234,35 +231,35 @@ class AnomalyEnsemble:
             Dictionary of model -> accuracy
         """
         return {
-            'isolation_forest': self.if_model,
-            'one_class_svm': self.svm_model,
-            'lstm_autoencoder': self.lstm_model,
+            "isolation_forest": self.if_model,
+            "one_class_svm": self.svm_model,
+            "lstm_autoencoder": self.lstm_model,
         }
 
     def get_metrics(self) -> Dict[str, Any]:
         """Get ensemble metrics"""
-        total = self.metrics['total_predictions']
+        total = self.metrics["total_predictions"]
         if total > 0:
-            anomaly_rate = self.metrics['anomalies_detected'] / total * 100
-            disagreement_rate = self.metrics['model_disagreements'] / total * 100
+            anomaly_rate = self.metrics["anomalies_detected"] / total * 100
+            disagreement_rate = self.metrics["model_disagreements"] / total * 100
         else:
             anomaly_rate = 0
             disagreement_rate = 0
 
         return {
             **self.metrics,
-            'anomaly_rate_percent': anomaly_rate,
-            'model_disagreement_rate_percent': disagreement_rate,
-            'weights': {
-                'isolation_forest': self.if_weight,
-                'one_class_svm': self.svm_weight,
-                'lstm_autoencoder': self.lstm_weight,
+            "anomaly_rate_percent": anomaly_rate,
+            "model_disagreement_rate_percent": disagreement_rate,
+            "weights": {
+                "isolation_forest": self.if_weight,
+                "one_class_svm": self.svm_weight,
+                "lstm_autoencoder": self.lstm_weight,
             },
-            'individual_metrics': {
-                'isolation_forest': self.if_model.get_metrics(),
-                'one_class_svm': self.svm_model.get_metrics(),
-                'lstm_autoencoder': self.lstm_model.get_metrics(),
-            }
+            "individual_metrics": {
+                "isolation_forest": self.if_model.get_metrics(),
+                "one_class_svm": self.svm_model.get_metrics(),
+                "lstm_autoencoder": self.lstm_model.get_metrics(),
+            },
         }
 
     @staticmethod
@@ -289,7 +286,7 @@ class AnomalyDetectionPipeline:
         preprocessor: Optional[Any] = None,
         feature_extractor: Optional[Any] = None,
         ensemble: Optional[AnomalyEnsemble] = None,
-        logger: Optional[logging.Logger] = None
+        logger: Optional[logging.Logger] = None,
     ):
         """Initialize pipeline"""
         self.preprocessor = preprocessor
@@ -297,7 +294,7 @@ class AnomalyDetectionPipeline:
         self.ensemble = ensemble or AnomalyEnsemble(logger=logger)
         self.logger = logger or logging.getLogger(__name__)
 
-    def fit(self, X: np.ndarray) -> 'AnomalyDetectionPipeline':
+    def fit(self, X: np.ndarray) -> "AnomalyDetectionPipeline":
         """Fit entire pipeline"""
         # Preprocess
         if self.preprocessor:

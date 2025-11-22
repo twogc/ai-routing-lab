@@ -3,18 +3,23 @@
 import logging
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
+
 import numpy as np
+
 
 class DriftType(Enum):
     """Types of drift"""
+
     DATA_DRIFT = "data_drift"
     CONCEPT_DRIFT = "concept_drift"
     PERFORMANCE_DRIFT = "performance_drift"
 
+
 @dataclass
 class DataDrift:
     """Data drift detection result"""
+
     is_drifted: bool
     drift_type: DriftType
     drift_score: float  # 0 to 1
@@ -23,15 +28,18 @@ class DataDrift:
     p_value: Optional[float] = None
     threshold: float = 0.05
 
+
 @dataclass
 class ConceptDrift:
     """Concept drift detection result"""
+
     is_drifted: bool
     performance_degradation: float  # Percentage
     baseline_accuracy: float
     current_accuracy: float
     window_size: int
     alert_threshold: float = 0.05  # 5% degradation
+
 
 class DriftDetector:
     """
@@ -47,7 +55,7 @@ class DriftDetector:
         self,
         window_size: int = 1000,
         drift_threshold: float = 0.05,
-        logger: Optional[logging.Logger] = None
+        logger: Optional[logging.Logger] = None,
     ):
         self.window_size = window_size
         self.drift_threshold = drift_threshold
@@ -58,7 +66,7 @@ class DriftDetector:
         self.baseline_accuracy = None
         self.fitted = False
 
-    def fit(self, X: np.ndarray, y_pred: np.ndarray, y_true: np.ndarray) -> 'DriftDetector':
+    def fit(self, X: np.ndarray, y_pred: np.ndarray, y_true: np.ndarray) -> "DriftDetector":
         """
         Fit drift detector on baseline data.
 
@@ -71,10 +79,10 @@ class DriftDetector:
             Self for chaining
         """
         self.baseline_distribution = {
-            'mean': np.mean(X, axis=0),
-            'std': np.std(X, axis=0),
-            'min': np.min(X, axis=0),
-            'max': np.max(X, axis=0),
+            "mean": np.mean(X, axis=0),
+            "std": np.std(X, axis=0),
+            "min": np.min(X, axis=0),
+            "max": np.max(X, axis=0),
         }
 
         self.baseline_predictions = y_pred
@@ -87,11 +95,7 @@ class DriftDetector:
 
         return self
 
-    def detect_data_drift(
-        self,
-        X: np.ndarray,
-        method: str = 'kl_divergence'
-    ) -> DataDrift:
+    def detect_data_drift(self, X: np.ndarray, method: str = "kl_divergence") -> DataDrift:
         """
         Detect data drift using statistical tests.
 
@@ -108,20 +112,22 @@ class DriftDetector:
         current_mean = np.mean(X, axis=0)
         current_std = np.std(X, axis=0)
 
-        if method == 'kl_divergence':
+        if method == "kl_divergence":
             drift_scores = self._kl_divergence(
-                current_mean, current_std,
-                self.baseline_distribution['mean'],
-                self.baseline_distribution['std']
+                current_mean,
+                current_std,
+                self.baseline_distribution["mean"],
+                self.baseline_distribution["std"],
             )
-        elif method == 'wasserstein':
+        elif method == "wasserstein":
             drift_scores = self._wasserstein_distance(
-                current_mean, current_std,
-                self.baseline_distribution['mean'],
-                self.baseline_distribution['std']
+                current_mean,
+                current_std,
+                self.baseline_distribution["mean"],
+                self.baseline_distribution["std"],
             )
         else:
-            drift_scores = np.abs(current_mean - self.baseline_distribution['mean'])
+            drift_scores = np.abs(current_mean - self.baseline_distribution["mean"])
 
         # Determine affected features
         affected_features = np.where(drift_scores > np.percentile(drift_scores, 75))[0]
@@ -138,14 +144,11 @@ class DriftDetector:
             affected_features=affected_names,
             statistical_test=method,
             p_value=self._calculate_p_value(drift_scores) if is_drifted else None,
-            threshold=self.drift_threshold
+            threshold=self.drift_threshold,
         )
 
     def detect_concept_drift(
-        self,
-        y_pred: np.ndarray,
-        y_true: np.ndarray,
-        window_size: Optional[int] = None
+        self, y_pred: np.ndarray, y_true: np.ndarray, window_size: Optional[int] = None
     ) -> ConceptDrift:
         """
         Detect concept drift via performance degradation.
@@ -173,14 +176,10 @@ class DriftDetector:
             baseline_accuracy=self.baseline_accuracy,
             current_accuracy=current_accuracy,
             window_size=window_size,
-            alert_threshold=0.05
+            alert_threshold=0.05,
         )
 
-    def detect_performance_drift(
-        self,
-        y_pred: np.ndarray,
-        y_true: np.ndarray
-    ) -> Dict[str, Any]:
+    def detect_performance_drift(self, y_pred: np.ndarray, y_true: np.ndarray) -> Dict[str, Any]:
         """
         Comprehensive performance drift detection.
 
@@ -191,18 +190,15 @@ class DriftDetector:
         recall = self._calculate_recall(y_pred, y_true)
 
         return {
-            'accuracy': accuracy,
-            'precision': precision,
-            'recall': recall,
-            'f1_score': 2 * (precision * recall) / (precision + recall + 1e-10),
-            'drift_detected': accuracy < self.baseline_accuracy * (1 - self.drift_threshold)
+            "accuracy": accuracy,
+            "precision": precision,
+            "recall": recall,
+            "f1_score": 2 * (precision * recall) / (precision + recall + 1e-10),
+            "drift_detected": accuracy < self.baseline_accuracy * (1 - self.drift_threshold),
         }
 
     def get_drift_report(
-        self,
-        X: np.ndarray,
-        y_pred: np.ndarray,
-        y_true: np.ndarray
+        self, X: np.ndarray, y_pred: np.ndarray, y_true: np.ndarray
     ) -> Dict[str, Any]:
         """Generate comprehensive drift report"""
         data_drift = self.detect_data_drift(X)
@@ -212,41 +208,35 @@ class DriftDetector:
         overall_drifted = data_drift.is_drifted or concept_drift.is_drifted
 
         return {
-            'overall_drift_detected': overall_drifted,
-            'data_drift': {
-                'detected': data_drift.is_drifted,
-                'score': data_drift.drift_score,
-                'affected_features': data_drift.affected_features,
+            "overall_drift_detected": overall_drifted,
+            "data_drift": {
+                "detected": data_drift.is_drifted,
+                "score": data_drift.drift_score,
+                "affected_features": data_drift.affected_features,
             },
-            'concept_drift': {
-                'detected': concept_drift.is_drifted,
-                'performance_degradation_percent': concept_drift.performance_degradation,
-                'baseline_accuracy': concept_drift.baseline_accuracy,
-                'current_accuracy': concept_drift.current_accuracy,
+            "concept_drift": {
+                "detected": concept_drift.is_drifted,
+                "performance_degradation_percent": concept_drift.performance_degradation,
+                "baseline_accuracy": concept_drift.baseline_accuracy,
+                "current_accuracy": concept_drift.current_accuracy,
             },
-            'performance_metrics': perf_drift,
+            "performance_metrics": perf_drift,
         }
 
     @staticmethod
     def _kl_divergence(mean_p, std_p, mean_q, std_q) -> np.ndarray:
         """Calculate KL divergence between Gaussians"""
-        var_p = std_p ** 2 + 1e-8
-        var_q = std_q ** 2 + 1e-8
+        var_p = std_p**2 + 1e-8
+        var_q = std_q**2 + 1e-8
 
-        kl = 0.5 * (
-            np.log(var_q / var_p) +
-            (var_p + (mean_p - mean_q) ** 2) / var_q - 1
-        )
+        kl = 0.5 * (np.log(var_q / var_p) + (var_p + (mean_p - mean_q) ** 2) / var_q - 1)
 
         return np.abs(kl)
 
     @staticmethod
     def _wasserstein_distance(mean_p, std_p, mean_q, std_q) -> np.ndarray:
         """Wasserstein distance between Gaussians"""
-        return (
-            np.abs(mean_p - mean_q) +
-            np.abs(std_p - std_q)
-        )
+        return np.abs(mean_p - mean_q) + np.abs(std_p - std_q)
 
     @staticmethod
     def _calculate_p_value(scores: np.ndarray) -> float:

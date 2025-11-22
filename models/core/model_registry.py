@@ -8,22 +8,19 @@ Handles model loading from disk, in-memory caching, version management, and fall
 import hashlib
 import json
 import logging
-import os
 import pickle
 import time
-from abc import ABC, abstractmethod
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
 from threading import Lock
 from typing import Any, Dict, List, Optional, Tuple
 
-import numpy as np
-
 
 @dataclass
 class ModelMetadata:
     """Metadata for a registered model"""
+
     model_id: str
     model_type: str  # 'anomaly', 'prediction', 'routing'
     version: str
@@ -57,7 +54,7 @@ class ModelRegistry:
         models_dir: str,
         cache_size_mb: int = 1024,
         cache_ttl_seconds: int = 3600,
-        logger: Optional[logging.Logger] = None
+        logger: Optional[logging.Logger] = None,
     ):
         """
         Initialize Model Registry.
@@ -78,12 +75,7 @@ class ModelRegistry:
         self._cache: Dict[str, Tuple[Any, float]] = {}  # model_id -> (model, load_time)
         self._metadata: Dict[str, ModelMetadata] = {}
         self._version_history: Dict[str, List[str]] = {}  # model_id -> [versions]
-        self._cache_stats = {
-            'hits': 0,
-            'misses': 0,
-            'loads': 0,
-            'evictions': 0
-        }
+        self._cache_stats = {"hits": 0, "misses": 0, "loads": 0, "evictions": 0}
 
         self.models_dir.mkdir(parents=True, exist_ok=True)
         self._load_metadata()
@@ -96,7 +88,7 @@ class ModelRegistry:
         model_type: str,
         accuracy: float,
         framework: str,
-        file_path: Optional[str] = None
+        file_path: Optional[str] = None,
     ) -> ModelMetadata:
         """
         Register a new model or update existing model.
@@ -121,7 +113,7 @@ class ModelRegistry:
 
             # Serialize and save
             try:
-                with open(file_path, 'wb') as f:
+                with open(file_path, "wb") as f:
                     pickle.dump(model, f)
                 checksum = self._calculate_checksum(file_path)
             except Exception as e:
@@ -138,7 +130,7 @@ class ModelRegistry:
                 updated_at=datetime.now().isoformat(),
                 file_path=file_path,
                 checksum=checksum,
-                framework=framework
+                framework=framework,
             )
 
             # Update registries
@@ -185,16 +177,18 @@ class ModelRegistry:
                 model, load_time = self._cache[model_id]
 
                 # Check TTL
-                if self.cache_ttl_seconds == 0 or \
-                   (time.time() - load_time) < self.cache_ttl_seconds:
-                    self._cache_stats['hits'] += 1
+                if (
+                    self.cache_ttl_seconds == 0
+                    or (time.time() - load_time) < self.cache_ttl_seconds
+                ):
+                    self._cache_stats["hits"] += 1
                     return model, self._metadata[model_id]
                 else:
                     # Cache expired
                     del self._cache[model_id]
 
             # Load from disk
-            self._cache_stats['misses'] += 1
+            self._cache_stats["misses"] += 1
 
             if model_id not in self._metadata:
                 raise KeyError(f"Model {model_id} not found in registry")
@@ -202,7 +196,7 @@ class ModelRegistry:
             metadata = self._metadata[model_id]
 
             try:
-                with open(metadata.file_path, 'rb') as f:
+                with open(metadata.file_path, "rb") as f:
                     model = pickle.load(f)
 
                 # Verify checksum
@@ -211,7 +205,7 @@ class ModelRegistry:
 
                 # Cache the model
                 self._cache[model_id] = (model, time.time())
-                self._cache_stats['loads'] += 1
+                self._cache_stats["loads"] += 1
 
                 return model, metadata
 
@@ -255,14 +249,16 @@ class ModelRegistry:
     def get_cache_stats(self) -> Dict[str, int]:
         """Get cache statistics"""
         with self._lock:
-            total_requests = self._cache_stats['hits'] + self._cache_stats['misses']
-            hit_rate = (self._cache_stats['hits'] / total_requests * 100) if total_requests > 0 else 0
+            total_requests = self._cache_stats["hits"] + self._cache_stats["misses"]
+            hit_rate = (
+                (self._cache_stats["hits"] / total_requests * 100) if total_requests > 0 else 0
+            )
 
             return {
                 **self._cache_stats,
-                'total_requests': total_requests,
-                'hit_rate_percent': hit_rate,
-                'cached_models': len(self._cache)
+                "total_requests": total_requests,
+                "hit_rate_percent": hit_rate,
+                "cached_models": len(self._cache),
             }
 
     def clear_cache(self, model_id: Optional[str] = None):
@@ -309,8 +305,8 @@ class ModelRegistry:
     def _calculate_checksum(file_path: str) -> str:
         """Calculate SHA-256 checksum of a file"""
         sha256 = hashlib.sha256()
-        with open(file_path, 'rb') as f:
-            for block in iter(lambda: f.read(65536), b''):
+        with open(file_path, "rb") as f:
+            for block in iter(lambda: f.read(65536), b""):
                 sha256.update(block)
         return sha256.hexdigest()
 
@@ -319,11 +315,11 @@ class ModelRegistry:
         metadata_file = self.models_dir / "metadata.json"
         if metadata_file.exists():
             try:
-                with open(metadata_file, 'r') as f:
+                with open(metadata_file, "r") as f:
                     data = json.load(f)
-                    for model_id, meta_dict in data.get('metadata', {}).items():
+                    for model_id, meta_dict in data.get("metadata", {}).items():
                         self._metadata[model_id] = ModelMetadata(**meta_dict)
-                    self._version_history = data.get('version_history', {})
+                    self._version_history = data.get("version_history", {})
                 self.logger.info(f"Loaded metadata for {len(self._metadata)} models")
             except Exception as e:
                 self.logger.error(f"Failed to load metadata: {e}")
@@ -333,13 +329,10 @@ class ModelRegistry:
         try:
             metadata_file = self.models_dir / "metadata.json"
             data = {
-                'metadata': {
-                    model_id: asdict(meta)
-                    for model_id, meta in self._metadata.items()
-                },
-                'version_history': self._version_history
+                "metadata": {model_id: asdict(meta) for model_id, meta in self._metadata.items()},
+                "version_history": self._version_history,
             }
-            with open(metadata_file, 'w') as f:
+            with open(metadata_file, "w") as f:
                 json.dump(data, f, indent=2)
         except Exception as e:
             self.logger.error(f"Failed to save metadata: {e}")

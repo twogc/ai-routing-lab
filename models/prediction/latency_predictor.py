@@ -18,9 +18,13 @@ from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
-from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
+from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor
+from sklearn.metrics import (
+    mean_absolute_error,
+    mean_squared_error,
+    r2_score,
+)
 from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score, mean_absolute_percentage_error
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +32,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class LatencyPrediction:
     """Latency prediction result with confidence metrics"""
+
     predicted_latency_ms: float
     confidence_interval: Tuple[float, float]  # (lower, upper)
     confidence_score: float
@@ -61,7 +66,7 @@ class LatencyPredictor:
         min_samples_leaf: int = 2,
         random_state: int = 42,
         use_gradient_boosting: bool = False,
-        logger: Optional[logging.Logger] = None
+        logger: Optional[logging.Logger] = None,
     ):
         """
         Initialize Latency Predictor.
@@ -93,7 +98,7 @@ class LatencyPredictor:
                 random_state=random_state,
                 learning_rate=0.1,
                 subsample=0.8,
-                loss='huber'
+                loss="huber",
             )
         else:
             self.model = RandomForestRegressor(
@@ -102,22 +107,23 @@ class LatencyPredictor:
                 min_samples_split=min_samples_split,
                 min_samples_leaf=min_samples_leaf,
                 random_state=random_state,
-                n_jobs=-1
+                n_jobs=-1,
             )
 
         # Secondary model for ensemble (always use complementary approach)
-        self.secondary_model = GradientBoostingRegressor(
-            n_estimators=50,
-            max_depth=8,
-            random_state=random_state,
-            learning_rate=0.05,
-            subsample=0.8,
-            loss='huber'
-        ) if not use_gradient_boosting else RandomForestRegressor(
-            n_estimators=50,
-            max_depth=10,
-            random_state=random_state,
-            n_jobs=-1
+        self.secondary_model = (
+            GradientBoostingRegressor(
+                n_estimators=50,
+                max_depth=8,
+                random_state=random_state,
+                learning_rate=0.05,
+                subsample=0.8,
+                loss="huber",
+            )
+            if not use_gradient_boosting
+            else RandomForestRegressor(
+                n_estimators=50, max_depth=10, random_state=random_state, n_jobs=-1
+            )
         )
 
         # Scaler for feature normalization
@@ -125,20 +131,15 @@ class LatencyPredictor:
 
         self.fitted = False
         self.feature_names: Optional[List[str]] = None
-        self.metrics = {
-            'r2_score': 0.0,
-            'mae': 0.0,
-            'rmse': 0.0,
-            'mape': 0.0
-        }
-    
+        self.metrics = {"r2_score": 0.0, "mae": 0.0, "rmse": 0.0, "mape": 0.0}
+
     def fit(
         self,
         X: np.ndarray,
         y: np.ndarray,
         feature_names: Optional[List[str]] = None,
-        use_ensemble: bool = True
-    ) -> 'LatencyPredictor':
+        use_ensemble: bool = True,
+    ) -> "LatencyPredictor":
         """
         Train latency prediction model with optional ensemble.
 
@@ -184,13 +185,13 @@ class LatencyPredictor:
         else:
             y_pred = self.model.predict(X_scaled)
 
-        self.metrics['r2_score'] = float(r2_score(y, y_pred))
-        self.metrics['mae'] = float(mean_absolute_error(y, y_pred))
-        self.metrics['rmse'] = float(np.sqrt(mean_squared_error(y, y_pred)))
+        self.metrics["r2_score"] = float(r2_score(y, y_pred))
+        self.metrics["mae"] = float(mean_absolute_error(y, y_pred))
+        self.metrics["rmse"] = float(np.sqrt(mean_squared_error(y, y_pred)))
 
         # MAPE (Mean Absolute Percentage Error)
         mape = np.mean(np.abs((y - y_pred) / (np.abs(y) + 1e-8))) * 100
-        self.metrics['mape'] = float(mape)
+        self.metrics["mape"] = float(mape)
 
         training_time = time_module.time() - start_time
 
@@ -200,7 +201,7 @@ class LatencyPredictor:
         )
 
         return self
-    
+
     def _ensemble_predict(self, X: np.ndarray) -> np.ndarray:
         """
         Combine predictions from primary and secondary models.
@@ -219,10 +220,7 @@ class LatencyPredictor:
         return ensemble_pred
 
     def predict(
-        self,
-        X: np.ndarray,
-        return_confidence: bool = True,
-        use_ensemble: bool = True
+        self, X: np.ndarray, return_confidence: bool = True, use_ensemble: bool = True
     ) -> LatencyPrediction:
         """
         Predict latency for given features with optional ensemble.
@@ -245,9 +243,7 @@ class LatencyPredictor:
             X = X.reshape(1, -1)
 
         if X.shape[1] != len(self.feature_names):
-            raise ValueError(
-                f"Expected {len(self.feature_names)} features, got {X.shape[1]}"
-            )
+            raise ValueError(f"Expected {len(self.feature_names)} features, got {X.shape[1]}")
 
         # Scale features
         X_scaled = self.scaler.transform(X)
@@ -260,55 +256,78 @@ class LatencyPredictor:
         else:
             predictions = self.model.predict(X_scaled)
 
-        predicted_latency = float(predictions[0]) if len(predictions) == 1 else predictions
+        # For multiple samples, use mean prediction; for single sample, use the value
+        if len(predictions) == 1:
+            predicted_latency = float(predictions[0])
+        else:
+            predicted_latency = float(np.mean(predictions))
 
         # Calculate confidence interval using tree predictions
-        if return_confidence and hasattr(self.model, 'estimators_'):
-            # Collect predictions from all estimators
-            tree_predictions_primary = np.array([
-                tree.predict(X_scaled)[0] if len(X_scaled) == 1 else tree.predict(X_scaled)
-                for tree in self.model.estimators_
-            ])
+        if return_confidence and hasattr(self.model, "estimators_"):
+            try:
+                # For RandomForest, estimators_ is a list of DecisionTreeRegressor
+                if isinstance(self.model, RandomForestRegressor):
+                    tree_predictions_primary = np.array(
+                        [tree.predict(X_scaled) for tree in self.model.estimators_]
+                    )
 
-            if use_ensemble:
-                tree_predictions_secondary = np.array([
-                    tree.predict(X_scaled)[0] if len(X_scaled) == 1 else tree.predict(X_scaled)
-                    for tree in self.secondary_model.estimators_
-                ])
-                # Ensemble tree predictions
-                tree_predictions = 0.6 * tree_predictions_primary + 0.4 * tree_predictions_secondary
-            else:
-                tree_predictions = tree_predictions_primary
+                    if use_ensemble and isinstance(self.secondary_model, RandomForestRegressor):
+                        tree_predictions_secondary = np.array(
+                            [tree.predict(X_scaled) for tree in self.secondary_model.estimators_]
+                        )
+                        # Ensemble tree predictions
+                        tree_predictions = (
+                            0.6 * tree_predictions_primary + 0.4 * tree_predictions_secondary
+                        )
+                    else:
+                        tree_predictions = tree_predictions_primary
+                else:
+                    # For GradientBoosting, use the prediction directly
+                    tree_predictions = np.array([predictions] * 10)  # Simulate uncertainty
 
-            if len(X_scaled) == 1:
-                tree_predictions = tree_predictions.flatten()
+                if len(X_scaled) == 1:
+                    tree_predictions = tree_predictions.flatten()
 
-            # Use percentiles for confidence interval
-            lower = np.percentile(tree_predictions, 5, axis=0)
-            upper = np.percentile(tree_predictions, 95, axis=0)
-            uncertainty = np.std(tree_predictions, axis=0)
+                # Use percentiles for confidence interval
+                lower = np.percentile(tree_predictions, 5, axis=0)
+                upper = np.percentile(tree_predictions, 95, axis=0)
+                uncertainty = np.std(tree_predictions, axis=0)
 
-            if len(X_scaled) == 1:
-                confidence_interval = (float(lower), float(upper))
-                confidence_score = 1.0 - (float(upper - lower) / (abs(predicted_latency) + 1e-8))
-                uncertainty_val = float(uncertainty)
-            else:
-                confidence_interval = (lower, upper)
-                confidence_score = 1.0 - np.mean((upper - lower) / (np.abs(predictions) + 1e-8))
-                uncertainty_val = np.mean(uncertainty)
+                # For multiple samples, use mean values
+                if len(X_scaled) == 1:
+                    confidence_interval = (float(lower), float(upper))
+                    confidence_score = 1.0 - (
+                        float(upper - lower) / (abs(predicted_latency) + 1e-8)
+                    )
+                    uncertainty_val = float(uncertainty)
+                else:
+                    # For multiple samples, use mean of intervals
+                    confidence_interval = (float(np.mean(lower)), float(np.mean(upper)))
+                    confidence_score = 1.0 - np.mean((upper - lower) / (np.abs(predictions) + 1e-8))
+                    uncertainty_val = float(np.mean(uncertainty))
+            except Exception as e:
+                # Fallback if tree prediction fails
+                self.logger.warning(f"Failed to calculate confidence from trees: {e}")
+                std_estimate = self.metrics.get("rmse", 10.0)
+                confidence_interval = (
+                    float(predicted_latency - 1.96 * std_estimate),
+                    float(predicted_latency + 1.96 * std_estimate),
+                )
+                confidence_score = 0.85
+                uncertainty_val = std_estimate
         else:
             # Fallback: use RMSE for confidence interval
-            std_estimate = self.metrics.get('rmse', 10.0)
+            std_estimate = self.metrics.get("rmse", 10.0)
             confidence_interval = (
                 float(predicted_latency - 1.96 * std_estimate),
-                float(predicted_latency + 1.96 * std_estimate)
+                float(predicted_latency + 1.96 * std_estimate),
             )
             confidence_score = 0.85
             uncertainty_val = std_estimate
 
         # Feature importance
         feature_importance = {}
-        if hasattr(self.model, 'feature_importances_'):
+        if hasattr(self.model, "feature_importances_"):
             importances = self.model.feature_importances_
             for i, name in enumerate(self.feature_names):
                 feature_importance[name] = float(importances[i])
@@ -316,20 +335,19 @@ class LatencyPredictor:
         prediction_time = time_module.time() - start_time
 
         return LatencyPrediction(
-            predicted_latency_ms=float(predicted_latency) if isinstance(predicted_latency, (int, float, np.number)) else predicted_latency,
+            predicted_latency_ms=predicted_latency,
             confidence_interval=confidence_interval,
-            confidence_score=float(confidence_score) if isinstance(confidence_score, (int, float, np.number)) else confidence_score,
+            confidence_score=(
+                float(confidence_score)
+                if isinstance(confidence_score, (int, float, np.number))
+                else confidence_score
+            ),
             feature_importance=feature_importance,
             uncertainty=float(uncertainty_val),
-            prediction_time_ms=prediction_time * 1000
+            prediction_time_ms=prediction_time * 1000,
         )
-    
-    def evaluate(
-        self,
-        X: np.ndarray,
-        y: np.ndarray,
-        use_ensemble: bool = True
-    ) -> Dict[str, float]:
+
+    def evaluate(self, X: np.ndarray, y: np.ndarray, use_ensemble: bool = True) -> Dict[str, float]:
         """
         Evaluate model on test data.
 
@@ -354,10 +372,10 @@ class LatencyPredictor:
             predictions = self.model.predict(X_scaled)
 
         metrics = {
-            'r2_score': float(r2_score(y, predictions)),
-            'mae': float(mean_absolute_error(y, predictions)),
-            'rmse': float(np.sqrt(mean_squared_error(y, predictions))),
-            'mape': float(np.mean(np.abs((y - predictions) / (np.abs(y) + 1e-8))) * 100)
+            "r2_score": float(r2_score(y, predictions)),
+            "mae": float(mean_absolute_error(y, predictions)),
+            "rmse": float(np.sqrt(mean_squared_error(y, predictions))),
+            "mape": float(np.mean(np.abs((y - predictions) / (np.abs(y) + 1e-8))) * 100),
         }
 
         self.logger.info(
@@ -367,24 +385,22 @@ class LatencyPredictor:
         )
 
         return metrics
-    
+
     def get_metrics(self) -> Dict[str, Any]:
         """Get model metrics"""
         return {
             **self.metrics,
-            'fitted': self.fitted,
-            'n_features': len(self.feature_names) if self.feature_names else 0,
-            'feature_names': self.feature_names
-        }
-    
-    def get_feature_importance(self) -> Dict[str, float]:
-        """Get feature importance scores"""
-        if not self.fitted or not hasattr(self.model, 'feature_importances_'):
-            return {}
-        
-        importances = self.model.feature_importances_
-        return {
-            name: float(importance)
-            for name, importance in zip(self.feature_names, importances)
+            "fitted": self.fitted,
+            "n_features": len(self.feature_names) if self.feature_names else 0,
+            "feature_names": self.feature_names,
         }
 
+    def get_feature_importance(self) -> Dict[str, float]:
+        """Get feature importance scores"""
+        if not self.fitted or not hasattr(self.model, "feature_importances_"):
+            return {}
+
+        importances = self.model.feature_importances_
+        return {
+            name: float(importance) for name, importance in zip(self.feature_names, importances)
+        }

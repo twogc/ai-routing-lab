@@ -8,14 +8,13 @@ Integrates with CloudBridge quic-test for real QUIC traffic data.
 import json
 import logging
 import time
-from pathlib import Path
-from typing import Dict, List, Optional
 from datetime import datetime
+from pathlib import Path
+from typing import Dict, Optional
 
 import requests
-from prometheus_client.parser import text_string_to_metric_families
-from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
+from watchdog.observers import Observer
 
 logger = logging.getLogger(__name__)
 
@@ -49,9 +48,7 @@ class PrometheusCollector:
 
         try:
             response = self.session.get(
-                f"{self.prometheus_url}/api/v1/query",
-                params={"query": query},
-                timeout=5
+                f"{self.prometheus_url}/api/v1/query", params={"query": query}, timeout=5
             )
             response.raise_for_status()
             data = response.json()
@@ -84,9 +81,7 @@ class PrometheusCollector:
 
         try:
             response = self.session.get(
-                f"{self.prometheus_url}/api/v1/query",
-                params={"query": query},
-                timeout=5
+                f"{self.prometheus_url}/api/v1/query", params={"query": query}, timeout=5
             )
             response.raise_for_status()
             data = response.json()
@@ -135,7 +130,7 @@ class JSONFileCollector(FileSystemEventHandler):
 
     def on_created(self, event):
         """Handle new file creation."""
-        if event.src_path.endswith('.json'):
+        if event.src_path.endswith(".json"):
             self.process_file(event.src_path)
 
     def process_file(self, file_path: str):
@@ -146,7 +141,7 @@ class JSONFileCollector(FileSystemEventHandler):
             file_path: Path to JSON file
         """
         try:
-            with open(file_path, 'r') as f:
+            with open(file_path, "r") as f:
                 data = json.load(f)
 
             # Extract relevant metrics
@@ -220,19 +215,10 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(description="Collect metrics from quic-test")
+    parser.add_argument("--prometheus-url", default="http://localhost:9090", help="Prometheus URL")
+    parser.add_argument("--watch-dir", help="Directory to watch for JSON files")
     parser.add_argument(
-        "--prometheus-url",
-        default="http://localhost:9090",
-        help="Prometheus URL"
-    )
-    parser.add_argument(
-        "--watch-dir",
-        help="Directory to watch for JSON files"
-    )
-    parser.add_argument(
-        "--output-dir",
-        default="data/raw",
-        help="Output directory for collected metrics"
+        "--output-dir", default="data/raw", help="Output directory for collected metrics"
     )
 
     args = parser.parse_args()
@@ -259,4 +245,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

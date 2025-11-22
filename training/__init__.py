@@ -1,4 +1,3 @@
-"""Training scripts for AI Routing Lab."""
+"""Training module for AI Routing Lab."""
 
-# Training scripts will be implemented here
-
+__all__ = []

@@ -2,20 +2,26 @@
 
 import logging
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
+
 import numpy as np
+
 
 @dataclass
 class MABRouteSelection:
     """MAB route selection"""
+
     selected_route: int
     ucb_scores: Dict[int, float]
     arm_statistics: Dict[int, Dict[str, float]]
 
+
 class MultiArmedBanditRouter:
     """UCB-based multi-armed bandit for online route selection."""
 
-    def __init__(self, n_routes: int = 5, epsilon: float = 0.1, logger: Optional[logging.Logger] = None):
+    def __init__(
+        self, n_routes: int = 5, epsilon: float = 0.1, logger: Optional[logging.Logger] = None
+    ):
         self.n_routes = n_routes
         self.epsilon = epsilon
         self.logger = logger or logging.getLogger(__name__)
@@ -24,7 +30,7 @@ class MultiArmedBanditRouter:
         self.counts = [0] * n_routes
         self.fitted = False
 
-    def fit(self, X: np.ndarray, y: np.ndarray) -> 'MultiArmedBanditRouter':
+    def fit(self, X: np.ndarray, y: np.ndarray) -> "MultiArmedBanditRouter":
         """Initialize rewards from training data"""
         # Initialize with empirical rewards
         unique_routes = np.unique(y)
@@ -64,25 +70,23 @@ class MultiArmedBanditRouter:
 
         arm_stats = {
             i: {
-                'mean_reward': self.rewards[i],
-                'count': self.counts[i],
-                'ucb_score': ucb_scores.get(i, 0.0)
+                "mean_reward": self.rewards[i],
+                "count": self.counts[i],
+                "ucb_score": ucb_scores.get(i, 0.0),
             }
             for i in range(self.n_routes)
         }
 
         return MABRouteSelection(
-            selected_route=selected,
-            ucb_scores=ucb_scores,
-            arm_statistics=arm_stats
+            selected_route=selected, ucb_scores=ucb_scores, arm_statistics=arm_stats
         )
 
     def get_metrics(self) -> Dict[str, Any]:
         return {
-            'n_routes': self.n_routes,
-            'total_pulls': sum(self.counts),
-            'mean_rewards': self.rewards.copy(),
-            'arm_counts': self.counts.copy()
+            "n_routes": self.n_routes,
+            "total_pulls": sum(self.counts),
+            "mean_rewards": self.rewards.copy(),
+            "arm_counts": self.counts.copy(),
         }
 
     def _calculate_ucb(self) -> np.ndarray:
@@ -92,7 +96,7 @@ class MultiArmedBanditRouter:
 
         for i in range(self.n_routes):
             if self.counts[i] == 0:
-                ucb[i] = float('inf')
+                ucb[i] = float("inf")
             else:
                 exploitation = self.rewards[i]
                 exploration = np.sqrt(2 * np.log(total + 1) / self.counts[i])

@@ -7,7 +7,7 @@ for anomaly detection, load prediction, and route optimization.
 
 import logging
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
@@ -15,6 +15,7 @@ import numpy as np
 @dataclass
 class FeatureExtractionResult:
     """Result of feature extraction"""
+
     features: np.ndarray
     feature_names: List[str]
     extraction_time_ms: float
@@ -32,11 +33,7 @@ class FeatureExtractor:
     - Domain features: performance indicators, network metrics
     """
 
-    def __init__(
-        self,
-        window_sizes: List[int] = None,
-        logger: Optional[logging.Logger] = None
-    ):
+    def __init__(self, window_sizes: List[int] = None, logger: Optional[logging.Logger] = None):
         """
         Initialize Feature Extractor.
 
@@ -58,7 +55,6 @@ class FeatureExtractor:
         Returns:
             Tuple of (features, feature_names)
         """
-        import time as time_module
         from datetime import datetime
 
         n_samples = len(timestamps)
@@ -91,14 +87,12 @@ class FeatureExtractor:
             features.append([hour, minute, weekday, day, month, is_weekend])
 
         if not feature_names:
-            feature_names = ['hour', 'minute', 'weekday', 'day', 'month', 'is_weekend']
+            feature_names = ["hour", "minute", "weekday", "day", "month", "is_weekend"]
 
         return np.array(features), feature_names
 
     def extract_statistical_features(
-        self,
-        X: np.ndarray,
-        include_quantiles: bool = True
+        self, X: np.ndarray, include_quantiles: bool = True
     ) -> Tuple[np.ndarray, List[str]]:
         """
         Extract statistical features from data.
@@ -128,12 +122,12 @@ class FeatureExtractor:
             ]
 
             col_feature_names = [
-                f'col{col}_mean',
-                f'col{col}_std',
-                f'col{col}_min',
-                f'col{col}_max',
-                f'col{col}_median',
-                f'col{col}_range',
+                f"col{col}_mean",
+                f"col{col}_std",
+                f"col{col}_min",
+                f"col{col}_max",
+                f"col{col}_median",
+                f"col{col}_range",
             ]
 
             # Add quantiles
@@ -141,11 +135,7 @@ class FeatureExtractor:
                 q25 = np.percentile(col_data, 25)
                 q75 = np.percentile(col_data, 75)
                 col_features.extend([q25, q75, q75 - q25])
-                col_feature_names.extend([
-                    f'col{col}_q25',
-                    f'col{col}_q75',
-                    f'col{col}_iqr'
-                ])
+                col_feature_names.extend([f"col{col}_q25", f"col{col}_q75", f"col{col}_iqr"])
 
             features.extend(col_features)
             feature_names.extend(col_feature_names)
@@ -153,9 +143,7 @@ class FeatureExtractor:
         return np.array(features), feature_names
 
     def extract_rolling_features(
-        self,
-        X: np.ndarray,
-        window_sizes: Optional[List[int]] = None
+        self, X: np.ndarray, window_sizes: Optional[List[int]] = None
     ) -> Tuple[np.ndarray, List[str]]:
         """
         Extract rolling window statistics.
@@ -185,17 +173,17 @@ class FeatureExtractor:
                 # Rolling mean
                 rolling_mean = self._rolling_window(col_data, window, np.mean)
                 features.append(rolling_mean)
-                feature_names.append(f'col{col}_rolling_mean_w{window}')
+                feature_names.append(f"col{col}_rolling_mean_w{window}")
 
                 # Rolling std
                 rolling_std = self._rolling_window(col_data, window, np.std)
                 features.append(rolling_std)
-                feature_names.append(f'col{col}_rolling_std_w{window}')
+                feature_names.append(f"col{col}_rolling_std_w{window}")
 
                 # Rolling min/max
                 rolling_min = self._rolling_window(col_data, window, np.min)
                 features.append(rolling_min)
-                feature_names.append(f'col{col}_rolling_min_w{window}')
+                feature_names.append(f"col{col}_rolling_min_w{window}")
 
         # Stack features (pad shorter ones)
         if features:
@@ -212,9 +200,7 @@ class FeatureExtractor:
         return features, feature_names
 
     def extract_exponential_moving_average(
-        self,
-        X: np.ndarray,
-        spans: List[int] = None
+        self, X: np.ndarray, spans: List[int] = None
     ) -> Tuple[np.ndarray, List[str]]:
         """
         Extract exponential moving average features.
@@ -239,7 +225,7 @@ class FeatureExtractor:
                 # Calculate EMA
                 ema = self._exponential_moving_average(col_data, span)
                 features.append(ema)
-                feature_names.append(f'col{col}_ema_span{span}')
+                feature_names.append(f"col{col}_ema_span{span}")
 
         if features:
             features = np.column_stack(features)
@@ -254,7 +240,7 @@ class FeatureExtractor:
         timestamps: Optional[np.ndarray] = None,
         include_stats: bool = True,
         include_rolling: bool = True,
-        include_ema: bool = True
+        include_ema: bool = True,
     ) -> FeatureExtractionResult:
         """
         Extract all available features.
@@ -278,7 +264,7 @@ class FeatureExtractor:
         # Original features
         all_features.append(X)
         for i in range(X.shape[1]):
-            all_feature_names.append(f'original_feat_{i}')
+            all_feature_names.append(f"original_feat_{i}")
 
         # Time features
         if timestamps is not None:
@@ -320,12 +306,11 @@ class FeatureExtractor:
             features=combined_features,
             feature_names=all_feature_names,
             extraction_time_ms=extraction_time_ms,
-            n_features_created=combined_features.shape[1]
+            n_features_created=combined_features.shape[1],
         )
 
         self.logger.info(
-            f"Extracted {result.n_features_created} features "
-            f"in {extraction_time_ms:.2f}ms"
+            f"Extracted {result.n_features_created} features " f"in {extraction_time_ms:.2f}ms"
         )
 
         return result
@@ -338,7 +323,7 @@ class FeatureExtractor:
 
         result = np.full(len(data), np.nan)
         for i in range(window - 1, len(data)):
-            result[i] = func(data[i - window + 1:i + 1])
+            result[i] = func(data[i - window + 1 : i + 1])
 
         return result
 
@@ -362,17 +347,18 @@ class DomainFeatureExtractor(FeatureExtractor):
     def extract_network_features(self, metrics: Dict[str, float]) -> Dict[str, float]:
         """Extract network-specific features"""
         return {
-            'rtt_zscore': (metrics.get('rtt', 0) - 50) / 10,  # Normalize RTT
-            'packet_loss_rate': metrics.get('packet_loss', 0) / 100,
-            'bandwidth_utilization': metrics.get('bandwidth_used', 0) / metrics.get('bandwidth_total', 1),
-            'error_rate': metrics.get('errors', 0) / metrics.get('total_requests', 1),
+            "rtt_zscore": (metrics.get("rtt", 0) - 50) / 10,  # Normalize RTT
+            "packet_loss_rate": metrics.get("packet_loss", 0) / 100,
+            "bandwidth_utilization": metrics.get("bandwidth_used", 0)
+            / metrics.get("bandwidth_total", 1),
+            "error_rate": metrics.get("errors", 0) / metrics.get("total_requests", 1),
         }
 
     def extract_performance_features(self, metrics: Dict[str, float]) -> Dict[str, float]:
         """Extract performance indicators"""
         return {
-            'throughput_normalized': metrics.get('throughput', 0) / 1000,  # Normalize to Gbps
-            'latency_p95_normalized': metrics.get('latency_p95', 0) / 100,  # Normalize to 100ms
-            'cpu_usage_percent': metrics.get('cpu_usage', 0) / 100,
-            'memory_usage_percent': metrics.get('memory_usage', 0) / 100,
+            "throughput_normalized": metrics.get("throughput", 0) / 1000,  # Normalize to Gbps
+            "latency_p95_normalized": metrics.get("latency_p95", 0) / 100,  # Normalize to 100ms
+            "cpu_usage_percent": metrics.get("cpu_usage", 0) / 100,
+            "memory_usage_percent": metrics.get("memory_usage", 0) / 100,
         }

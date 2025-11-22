@@ -15,6 +15,7 @@ import numpy as np
 @dataclass
 class PreprocessingStats:
     """Statistics from data preprocessing"""
+
     original_shape: Tuple[int, ...]
     final_shape: Tuple[int, ...]
     missing_values_handled: int
@@ -39,10 +40,10 @@ class DataPreprocessor:
 
     def __init__(
         self,
-        strategy: str = 'mean',
-        outlier_method: str = 'iqr',
-        normalization: str = 'standard',
-        logger: Optional[logging.Logger] = None
+        strategy: str = "mean",
+        outlier_method: str = "iqr",
+        normalization: str = "standard",
+        logger: Optional[logging.Logger] = None,
     ):
         """
         Initialize Data Preprocessor.
@@ -67,7 +68,7 @@ class DataPreprocessor:
         self.feature_maxs = None
         self.feature_names = None
 
-    def fit(self, X: np.ndarray, feature_names: Optional[List[str]] = None) -> 'DataPreprocessor':
+    def fit(self, X: np.ndarray, feature_names: Optional[List[str]] = None) -> "DataPreprocessor":
         """
         Fit preprocessor on data.
 
@@ -94,17 +95,12 @@ class DataPreprocessor:
         self.feature_stds[self.feature_stds == 0] = 1.0
 
         self.fitted = True
-        self.logger.info(
-            f"DataPreprocessor fitted on {X.shape[0]} samples, {X.shape[1]} features"
-        )
+        self.logger.info(f"DataPreprocessor fitted on {X.shape[0]} samples, {X.shape[1]} features")
 
         return self
 
     def transform(
-        self,
-        X: np.ndarray,
-        remove_outliers: bool = True,
-        normalize: bool = True
+        self, X: np.ndarray, remove_outliers: bool = True, normalize: bool = True
     ) -> Tuple[np.ndarray, PreprocessingStats]:
         """
         Transform data using fitted preprocessor.
@@ -121,6 +117,7 @@ class DataPreprocessor:
             raise RuntimeError("Preprocessor must be fitted before transform")
 
         import time
+
         start_time = time.time()
 
         X = X.astype(np.float32).copy()
@@ -149,7 +146,7 @@ class DataPreprocessor:
             outliers_detected=outliers_detected,
             outliers_removed=outliers_removed,
             features_normalized=features_normalized,
-            preprocessing_time_ms=processing_time_ms
+            preprocessing_time_ms=processing_time_ms,
         )
 
         self.logger.debug(
@@ -164,7 +161,7 @@ class DataPreprocessor:
         X: np.ndarray,
         feature_names: Optional[List[str]] = None,
         remove_outliers: bool = True,
-        normalize: bool = True
+        normalize: bool = True,
     ) -> Tuple[np.ndarray, PreprocessingStats]:
         """
         Fit on data and transform in one step.
@@ -200,18 +197,18 @@ class DataPreprocessor:
             col_missing = np.isnan(X[:, col])
 
             if np.any(col_missing):
-                if self.strategy == 'mean':
+                if self.strategy == "mean":
                     X[col_missing, col] = self.feature_means[col]
-                elif self.strategy == 'median':
+                elif self.strategy == "median":
                     X[col_missing, col] = self.feature_medians[col]
-                elif self.strategy == 'forward_fill':
+                elif self.strategy == "forward_fill":
                     # Forward fill with fallback to mean
                     for i in np.where(col_missing)[0]:
                         if i == 0:
                             X[i, col] = self.feature_means[col]
                         else:
                             X[i, col] = X[i - 1, col]
-                elif self.strategy == 'drop':
+                elif self.strategy == "drop":
                     # Already handled by removing rows
                     continue
 
@@ -230,7 +227,7 @@ class DataPreprocessor:
         outliers_detected = 0
         outliers_removed = 0
 
-        if self.outlier_method == 'iqr':
+        if self.outlier_method == "iqr":
             # Use Interquartile Range method
             q1 = np.nanpercentile(X, 25, axis=0)
             q3 = np.nanpercentile(X, 75, axis=0)
@@ -249,18 +246,23 @@ class DataPreprocessor:
                 outliers_detected += np.sum(col_outliers)
 
             # Cap outliers instead of removing
-            X[X < lower_bound] = lower_bound[X < lower_bound]
-            X[X > upper_bound] = upper_bound[X > upper_bound]
+            for col in range(X.shape[1]):
+                col_mask_lower = X[:, col] < lower_bound[col]
+                col_mask_upper = X[:, col] > upper_bound[col]
+                X[col_mask_lower, col] = lower_bound[col]
+                X[col_mask_upper, col] = upper_bound[col]
             outliers_removed = np.sum(outlier_mask)
 
-        elif self.outlier_method == 'zscore':
+        elif self.outlier_method == "zscore":
             # Z-score method
             z_scores = np.abs((X - self.feature_means) / self.feature_stds)
             outlier_mask = (z_scores > 3).any(axis=1)
             outliers_detected = np.sum(outlier_mask)
 
             # Cap values at 3 sigma
-            X[z_scores > 3] = self.feature_means[z_scores > 3]
+            for col in range(X.shape[1]):
+                col_mask = z_scores[:, col] > 3
+                X[col_mask, col] = self.feature_means[col]
             outliers_removed = outliers_detected
 
         return outliers_detected, outliers_removed
@@ -275,17 +277,17 @@ class DataPreprocessor:
         Returns:
             Number of features normalized
         """
-        if self.normalization == 'standard':
+        if self.normalization == "standard":
             # Standardization: (x - mean) / std
             X[:] = (X - self.feature_means) / np.maximum(self.feature_stds, 1e-8)
 
-        elif self.normalization == 'minmax':
+        elif self.normalization == "minmax":
             # Min-Max scaling: (x - min) / (max - min)
             ranges = self.feature_maxs - self.feature_mins
             ranges[ranges == 0] = 1.0
             X[:] = (X - self.feature_mins) / ranges
 
-        elif self.normalization == 'robust':
+        elif self.normalization == "robust":
             # Robust scaling using median and IQR
             q1 = np.nanpercentile(X, 25, axis=0)
             q3 = np.nanpercentile(X, 75, axis=0)
@@ -300,16 +302,18 @@ class DataPreprocessor:
             return {}
 
         return {
-            'fitted': True,
-            'n_features': len(self.feature_names),
-            'feature_names': self.feature_names,
-            'feature_means': self.feature_means.tolist() if self.feature_means is not None else None,
-            'feature_stds': self.feature_stds.tolist() if self.feature_stds is not None else None,
-            'feature_mins': self.feature_mins.tolist() if self.feature_mins is not None else None,
-            'feature_maxs': self.feature_maxs.tolist() if self.feature_maxs is not None else None,
-            'strategy': self.strategy,
-            'outlier_method': self.outlier_method,
-            'normalization': self.normalization
+            "fitted": True,
+            "n_features": len(self.feature_names),
+            "feature_names": self.feature_names,
+            "feature_means": (
+                self.feature_means.tolist() if self.feature_means is not None else None
+            ),
+            "feature_stds": self.feature_stds.tolist() if self.feature_stds is not None else None,
+            "feature_mins": self.feature_mins.tolist() if self.feature_mins is not None else None,
+            "feature_maxs": self.feature_maxs.tolist() if self.feature_maxs is not None else None,
+            "strategy": self.strategy,
+            "outlier_method": self.outlier_method,
+            "normalization": self.normalization,
         }
 
 
@@ -317,10 +321,7 @@ class RobustPreprocessor(DataPreprocessor):
     """Extended preprocessor with additional robustness features"""
 
     def handle_categorical(
-        self,
-        X: np.ndarray,
-        categorical_cols: List[int],
-        encoding: str = 'onehot'
+        self, X: np.ndarray, categorical_cols: List[int], encoding: str = "onehot"
     ) -> np.ndarray:
         """
         Handle categorical features.
@@ -333,7 +334,7 @@ class RobustPreprocessor(DataPreprocessor):
         Returns:
             Transformed array with encoded categorical features
         """
-        if encoding == 'onehot':
+        if encoding == "onehot":
             # One-hot encoding would expand features
             # For now, just handle with label encoding
             pass
@@ -356,9 +357,7 @@ class RobustPreprocessor(DataPreprocessor):
             errors.append("Empty data")
 
         if self.fitted and X.shape[1] != len(self.feature_names):
-            errors.append(
-                f"Feature mismatch: expected {len(self.feature_names)}, got {X.shape[1]}"
-            )
+            errors.append(f"Feature mismatch: expected {len(self.feature_names)}, got {X.shape[1]}")
 
         # Check for all NaN columns
         if np.all(np.isnan(X), axis=0).any():

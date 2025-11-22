@@ -7,7 +7,7 @@ Handles missing data and outliers robustly.
 
 import logging
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 import numpy as np
 
@@ -15,6 +15,7 @@ import numpy as np
 @dataclass
 class ProphetForecast:
     """Prophet forecast result"""
+
     predictions: np.ndarray
     trend: np.ndarray
     seasonal: np.ndarray
@@ -37,7 +38,7 @@ class ProphetModel:
         self,
         seasonality_period: int = 24,  # Daily seasonality (hourly data)
         interval_width: float = 0.95,
-        logger: Optional[logging.Logger] = None
+        logger: Optional[logging.Logger] = None,
     ):
         """
         Initialize Prophet model.
@@ -58,13 +59,13 @@ class ProphetModel:
         self.y_std = None
 
         self.metrics = {
-            'mse': 0.0,
-            'rmse': 0.0,
-            'mae': 0.0,
-            'r_squared': 0.0,
+            "mse": 0.0,
+            "rmse": 0.0,
+            "mae": 0.0,
+            "r_squared": 0.0,
         }
 
-    def fit(self, y: np.ndarray, t: Optional[np.ndarray] = None) -> 'ProphetModel':
+    def fit(self, y: np.ndarray, t: Optional[np.ndarray] = None) -> "ProphetModel":
         """
         Fit Prophet model on time series.
 
@@ -108,13 +109,13 @@ class ProphetModel:
         # Calculate metrics
         predictions = self._predict_fitted(y)
         mse = np.mean((y - predictions) ** 2)
-        self.metrics['mse'] = mse
-        self.metrics['rmse'] = np.sqrt(mse)
-        self.metrics['mae'] = np.mean(np.abs(y - predictions))
+        self.metrics["mse"] = mse
+        self.metrics["rmse"] = np.sqrt(mse)
+        self.metrics["mae"] = np.mean(np.abs(y - predictions))
 
         ss_res = np.sum((y - predictions) ** 2)
         ss_tot = np.sum((y - np.mean(y)) ** 2)
-        self.metrics['r_squared'] = 1 - (ss_res / ss_tot) if ss_tot > 0 else 0
+        self.metrics["r_squared"] = 1 - (ss_res / ss_tot) if ss_tot > 0 else 0
 
         self.fitted = True
         self.logger.info(
@@ -125,10 +126,7 @@ class ProphetModel:
         return self
 
     def forecast(
-        self,
-        y: np.ndarray,
-        steps: int = 1,
-        t_last: Optional[int] = None
+        self, y: np.ndarray, steps: int = 1, t_last: Optional[int] = None
     ) -> Tuple[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
         """
         Forecast future values.
@@ -229,8 +227,8 @@ class ProphetModel:
         """Get model metrics"""
         return {
             **self.metrics,
-            'seasonality_period': self.seasonality_period,
-            'interval_width': self.interval_width,
+            "seasonality_period": self.seasonality_period,
+            "interval_width": self.interval_width,
         }
 
     def _predict_fitted(self, y: np.ndarray) -> np.ndarray:

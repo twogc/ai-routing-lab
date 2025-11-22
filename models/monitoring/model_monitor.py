@@ -1,14 +1,17 @@
 """Model Monitor - Continuous model health monitoring and metrics collection."""
 
 import logging
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Dict, List, Optional
+
 import numpy as np
+
 
 @dataclass
 class ModelHealth:
     """Model health status"""
+
     model_id: str
     timestamp: str
     accuracy: float
@@ -23,6 +26,7 @@ class ModelHealth:
     cache_hit_rate: float
     status: str  # 'healthy', 'degraded', 'unhealthy'
     alerts: List[str]
+
 
 class ModelMonitor:
     """
@@ -44,7 +48,7 @@ class ModelMonitor:
         accuracy_threshold: float = 0.85,
         latency_threshold_ms: float = 100,
         error_rate_threshold: float = 0.05,
-        logger: Optional[logging.Logger] = None
+        logger: Optional[logging.Logger] = None,
     ):
         self.model_id = model_id
         self.accuracy_threshold = accuracy_threshold
@@ -67,7 +71,7 @@ class ModelMonitor:
         ground_truth: Optional[Any] = None,
         latency_ms: float = 0.0,
         cache_hit: bool = False,
-        error: bool = False
+        error: bool = False,
     ):
         """Record a single prediction for monitoring"""
         self.predictions_total += 1
@@ -89,8 +93,7 @@ class ModelMonitor:
         """Get current health metrics"""
         # Calculate accuracy
         accuracy = (
-            self.predictions_correct / self.predictions_total
-            if self.predictions_total > 0 else 0.0
+            self.predictions_correct / self.predictions_total if self.predictions_total > 0 else 0.0
         )
 
         # Calculate latencies
@@ -106,17 +109,13 @@ class ModelMonitor:
 
         # Calculate cache hit rate
         cache_total = self.cache_hits + self.cache_misses
-        cache_hit_rate = (
-            self.cache_hits / cache_total if cache_total > 0 else 0.0
-        )
+        cache_hit_rate = self.cache_hits / cache_total if cache_total > 0 else 0.0
 
         # Calculate error rate
         error_rate = self.errors / max(1, self.predictions_total)
 
         # Determine health status and alerts
-        status, alerts = self._determine_health(
-            accuracy, latency_p95, error_rate
-        )
+        status, alerts = self._determine_health(accuracy, latency_p95, error_rate)
 
         # Simplified precision/recall/f1 for demo
         precision = accuracy * 0.95
@@ -137,7 +136,7 @@ class ModelMonitor:
             error_rate=error_rate,
             cache_hit_rate=cache_hit_rate,
             status=status,
-            alerts=alerts
+            alerts=alerts,
         )
 
         self.metrics_history.append(health)
@@ -148,37 +147,33 @@ class ModelMonitor:
         recent_metrics = self.metrics_history[-window_size:] if self.metrics_history else []
 
         if not recent_metrics:
-            return {
-                'model_id': self.model_id,
-                'status': 'no_data',
-                'metrics_count': 0
-            }
+            return {"model_id": self.model_id, "status": "no_data", "metrics_count": 0}
 
         accuracies = [m.accuracy for m in recent_metrics]
         latencies = [m.latency_p95_ms for m in recent_metrics]
         error_rates = [m.error_rate for m in recent_metrics]
 
         return {
-            'model_id': self.model_id,
-            'metrics_count': len(recent_metrics),
-            'accuracy': {
-                'mean': float(np.mean(accuracies)),
-                'std': float(np.std(accuracies)),
-                'min': float(np.min(accuracies)),
-                'max': float(np.max(accuracies))
+            "model_id": self.model_id,
+            "metrics_count": len(recent_metrics),
+            "accuracy": {
+                "mean": float(np.mean(accuracies)),
+                "std": float(np.std(accuracies)),
+                "min": float(np.min(accuracies)),
+                "max": float(np.max(accuracies)),
             },
-            'latency_p95_ms': {
-                'mean': float(np.mean(latencies)),
-                'std': float(np.std(latencies)),
-                'min': float(np.min(latencies)),
-                'max': float(np.max(latencies))
+            "latency_p95_ms": {
+                "mean": float(np.mean(latencies)),
+                "std": float(np.std(latencies)),
+                "min": float(np.min(latencies)),
+                "max": float(np.max(latencies)),
             },
-            'error_rate': {
-                'mean': float(np.mean(error_rates)),
-                'std': float(np.std(error_rates)),
-                'max': float(np.max(error_rates))
+            "error_rate": {
+                "mean": float(np.mean(error_rates)),
+                "std": float(np.std(error_rates)),
+                "max": float(np.max(error_rates)),
             },
-            'current_status': recent_metrics[-1].status if recent_metrics else 'unknown'
+            "current_status": recent_metrics[-1].status if recent_metrics else "unknown",
         }
 
     def get_prometheus_metrics(self) -> str:
@@ -221,35 +216,24 @@ cloudbridge_model_cache_hit_rate{{model_id="{self.model_id}"}} {metrics.cache_hi
         self.cache_misses = 0
         self.errors = 0
 
-    def _determine_health(
-        self,
-        accuracy: float,
-        latency_p95: float,
-        error_rate: float
-    ) -> tuple:
+    def _determine_health(self, accuracy: float, latency_p95: float, error_rate: float) -> tuple:
         """Determine health status and generate alerts"""
         alerts = []
 
         if accuracy < self.accuracy_threshold:
-            alerts.append(
-                f"Low accuracy: {accuracy:.4f} < {self.accuracy_threshold}"
-            )
+            alerts.append(f"Low accuracy: {accuracy:.4f} < {self.accuracy_threshold}")
 
         if latency_p95 > self.latency_threshold_ms:
-            alerts.append(
-                f"High latency: {latency_p95:.2f}ms > {self.latency_threshold_ms}ms"
-            )
+            alerts.append(f"High latency: {latency_p95:.2f}ms > {self.latency_threshold_ms}ms")
 
         if error_rate > self.error_rate_threshold:
-            alerts.append(
-                f"High error rate: {error_rate:.4f} > {self.error_rate_threshold}"
-            )
+            alerts.append(f"High error rate: {error_rate:.4f} > {self.error_rate_threshold}")
 
         if len(alerts) >= 2:
-            status = 'unhealthy'
+            status = "unhealthy"
         elif len(alerts) == 1:
-            status = 'degraded'
+            status = "degraded"
         else:
-            status = 'healthy'
+            status = "healthy"
 
         return status, alerts

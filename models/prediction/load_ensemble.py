@@ -22,6 +22,7 @@ from .random_forest_load import RandomForestLoadModel
 @dataclass
 class EnsembleForecast:
     """Result of ensemble load prediction"""
+
     predicted_load: float
     confidence_interval: Tuple[float, float]  # (lower, upper)
     uncertainty: float
@@ -56,7 +57,7 @@ class LoadPredictionEnsemble:
         lstm_weight: float = 0.35,
         arima_weight: float = 0.10,
         prophet_weight: float = 0.30,
-        logger: Optional[logging.Logger] = None
+        logger: Optional[logging.Logger] = None,
     ):
         """
         Initialize Load Prediction Ensemble.
@@ -77,9 +78,7 @@ class LoadPredictionEnsemble:
         # Validate weights sum to 1
         total_weight = rf_weight + lstm_weight + arima_weight + prophet_weight
         if abs(total_weight - 1.0) > 0.01:
-            self.logger.warning(
-                f"Weights don't sum to 1.0: {total_weight:.4f}, normalizing"
-            )
+            self.logger.warning(f"Weights don't sum to 1.0: {total_weight:.4f}, normalizing")
             self.rf_weight /= total_weight
             self.lstm_weight /= total_weight
             self.arima_weight /= total_weight
@@ -93,14 +92,14 @@ class LoadPredictionEnsemble:
 
         self.fitted = False
         self.metrics = {
-            'mse': 0.0,
-            'rmse': 0.0,
-            'mae': 0.0,
-            'r_squared': 0.0,
-            'total_forecasts': 0,
+            "mse": 0.0,
+            "rmse": 0.0,
+            "mae": 0.0,
+            "r_squared": 0.0,
+            "total_forecasts": 0,
         }
 
-    def fit(self, X: np.ndarray, y: np.ndarray) -> 'LoadPredictionEnsemble':
+    def fit(self, X: np.ndarray, y: np.ndarray) -> "LoadPredictionEnsemble":
         """
         Fit all ensemble models.
 
@@ -126,13 +125,13 @@ class LoadPredictionEnsemble:
         # Calculate ensemble metrics
         predictions = self.predict(X)[0]
         mse = np.mean((y - predictions) ** 2)
-        self.metrics['mse'] = mse
-        self.metrics['rmse'] = np.sqrt(mse)
-        self.metrics['mae'] = np.mean(np.abs(y - predictions))
+        self.metrics["mse"] = mse
+        self.metrics["rmse"] = np.sqrt(mse)
+        self.metrics["mae"] = np.mean(np.abs(y - predictions))
 
         ss_res = np.sum((y - predictions) ** 2)
         ss_tot = np.sum((y - np.mean(y)) ** 2)
-        self.metrics['r_squared'] = 1 - (ss_res / ss_tot) if ss_tot > 0 else 0
+        self.metrics["r_squared"] = 1 - (ss_res / ss_tot) if ss_tot > 0 else 0
 
         self.fitted = True
         self.logger.info(
@@ -164,7 +163,7 @@ class LoadPredictionEnsemble:
         lstm_uncert = (lstm_ci[1] - lstm_ci[0]) / (2 * 1.96)
 
         # ARIMA - use last value as forecast (simplified)
-        arima_preds = np.full(len(X), y[-1] if 'y' in locals() else X[:, 0].mean())
+        arima_preds = np.full(len(X), y[-1] if "y" in locals() else X[:, 0].mean())
         arima_uncert = np.std(X, axis=0)[0] * 0.1
 
         # Prophet - similar to LSTM
@@ -179,21 +178,21 @@ class LoadPredictionEnsemble:
 
         # Weighted ensemble
         predictions = (
-            self.rf_weight * rf_preds +
-            self.lstm_weight * lstm_preds +
-            self.arima_weight * arima_preds +
-            self.prophet_weight * prophet_preds
+            self.rf_weight * rf_preds
+            + self.lstm_weight * lstm_preds
+            + self.arima_weight * arima_preds
+            + self.prophet_weight * prophet_preds
         )
 
         # Uncertainty combination (quadratic sum)
         uncertainties = np.sqrt(
-            (self.rf_weight * rf_uncert) ** 2 +
-            (self.lstm_weight * lstm_uncert) ** 2 +
-            (self.arima_weight * arima_uncert) ** 2 +
-            (self.prophet_weight * prophet_uncert) ** 2
+            (self.rf_weight * rf_uncert) ** 2
+            + (self.lstm_weight * lstm_uncert) ** 2
+            + (self.arima_weight * arima_uncert) ** 2
+            + (self.prophet_weight * prophet_uncert) ** 2
         )
 
-        self.metrics['total_forecasts'] += len(X)
+        self.metrics["total_forecasts"] += len(X)
 
         return predictions, uncertainties
 
@@ -216,17 +215,15 @@ class LoadPredictionEnsemble:
         lstm_pred = lstm_pred[0]
 
         model_predictions = {
-            'random_forest': float(rf_pred.predicted_load),
-            'lstm': float(lstm_pred),
-            'arima': float(self.arima_model.forecast(np.array([0]), 1)[0][0]),
-            'prophet': float(self.prophet_model.forecast(np.array([0]), 1)[0][0]),
+            "random_forest": float(rf_pred.predicted_load),
+            "lstm": float(lstm_pred),
+            "arima": float(self.arima_model.forecast(np.array([0]), 1)[0][0]),
+            "prophet": float(self.prophet_model.forecast(np.array([0]), 1)[0][0]),
         }
 
         # Calculate model agreement
         mean_pred = np.mean(list(model_predictions.values()))
-        agreement_scores = [
-            abs(p - mean_pred) for p in model_predictions.values()
-        ]
+        agreement_scores = [abs(p - mean_pred) for p in model_predictions.values()]
         max_deviation = max(agreement_scores) if agreement_scores else 0
         agreement = max(0, 1.0 - (max_deviation / (mean_pred + 1e-8)))
 
@@ -241,12 +238,12 @@ class LoadPredictionEnsemble:
             uncertainty=float(uncertainty),
             model_predictions=model_predictions,
             model_weights={
-                'random_forest': self.rf_weight,
-                'lstm': self.lstm_weight,
-                'arima': self.arima_weight,
-                'prophet': self.prophet_weight,
+                "random_forest": self.rf_weight,
+                "lstm": self.lstm_weight,
+                "arima": self.arima_weight,
+                "prophet": self.prophet_weight,
             },
-            model_agreement_percent=agreement * 100
+            model_agreement_percent=agreement * 100,
         )
 
     def score(self, X: np.ndarray, y: np.ndarray) -> float:
@@ -260,18 +257,18 @@ class LoadPredictionEnsemble:
         """Get ensemble metrics"""
         return {
             **self.metrics,
-            'weights': {
-                'random_forest': self.rf_weight,
-                'lstm': self.lstm_weight,
-                'arima': self.arima_weight,
-                'prophet': self.prophet_weight,
+            "weights": {
+                "random_forest": self.rf_weight,
+                "lstm": self.lstm_weight,
+                "arima": self.arima_weight,
+                "prophet": self.prophet_weight,
             },
-            'individual_metrics': {
-                'random_forest': self.rf_model.get_metrics(),
-                'lstm': self.lstm_model.get_metrics(),
-                'arima': self.arima_model.get_metrics(),
-                'prophet': self.prophet_model.get_metrics(),
-            }
+            "individual_metrics": {
+                "random_forest": self.rf_model.get_metrics(),
+                "lstm": self.lstm_model.get_metrics(),
+                "arima": self.arima_model.get_metrics(),
+                "prophet": self.prophet_model.get_metrics(),
+            },
         }
 
     @staticmethod

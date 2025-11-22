@@ -3,22 +3,26 @@
 import logging
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple
+
 import numpy as np
 
-from .random_forest_route import RandomForestRouteClassifier
-from .neural_network_route import NeuralNetworkRouteOptimizer
 from .multi_armed_bandit import MultiArmedBanditRouter
+from .neural_network_route import NeuralNetworkRouteOptimizer
 from .q_learning_route import QLearningRouter
+from .random_forest_route import RandomForestRouteClassifier
+
 
 @dataclass
 class EnsembleRouteSelection:
     """Ensemble route selection result"""
+
     selected_route: int
     ensemble_score: float
     model_votes: Dict[str, int]
     model_confidences: Dict[str, float]
     top_3_routes: List[Tuple[int, float]]
     model_agreement_percent: float
+
 
 class RouteOptimizationEnsemble:
     """
@@ -35,7 +39,7 @@ class RouteOptimizationEnsemble:
         ql_weight: float = 0.20,
         mab_weight: float = 0.10,
         n_routes: int = 5,
-        logger: Optional[logging.Logger] = None
+        logger: Optional[logging.Logger] = None,
     ):
         self.nn_weight = nn_weight
         self.rf_weight = rf_weight
@@ -58,9 +62,9 @@ class RouteOptimizationEnsemble:
         self.mab_model = MultiArmedBanditRouter(n_routes=n_routes, logger=logger)
 
         self.fitted = False
-        self.metrics = {'total_selections': 0, 'agreement_count': 0}
+        self.metrics = {"total_selections": 0, "agreement_count": 0}
 
-    def fit(self, X: np.ndarray, y: np.ndarray) -> 'RouteOptimizationEnsemble':
+    def fit(self, X: np.ndarray, y: np.ndarray) -> "RouteOptimizationEnsemble":
         """Fit all ensemble models"""
         self.logger.info("Fitting Neural Network...")
         self.nn_model.fit(X, y)
@@ -106,34 +110,34 @@ class RouteOptimizationEnsemble:
             nn_pred.selected_route,
             rf_pred.selected_route,
             ql_pred.selected_route,
-            mab_pred.selected_route
+            mab_pred.selected_route,
         ]
         agreement = sum(1 for v in individual_votes if v == selected_route) / len(individual_votes)
 
         # Top 3 routes
         top_3 = sorted(enumerate(votes), key=lambda x: x[1], reverse=True)[:3]
 
-        self.metrics['total_selections'] += 1
+        self.metrics["total_selections"] += 1
         if agreement == 1.0:
-            self.metrics['agreement_count'] += 1
+            self.metrics["agreement_count"] += 1
 
         return EnsembleRouteSelection(
             selected_route=int(selected_route),
             ensemble_score=float(ensemble_score),
             model_votes={
-                'neural_network': int(nn_pred.selected_route),
-                'random_forest': int(rf_pred.selected_route),
-                'q_learning': int(ql_pred.selected_route),
-                'mab': int(mab_pred.selected_route),
+                "neural_network": int(nn_pred.selected_route),
+                "random_forest": int(rf_pred.selected_route),
+                "q_learning": int(ql_pred.selected_route),
+                "mab": int(mab_pred.selected_route),
             },
             model_confidences={
-                'neural_network': float(nn_pred.confidence),
-                'random_forest': float(rf_pred.confidence),
-                'q_learning': float(ql_pred.expected_reward),
-                'mab': float(sum(mab_pred.arm_statistics[mab_pred.selected_route].values()) / 3),
+                "neural_network": float(nn_pred.confidence),
+                "random_forest": float(rf_pred.confidence),
+                "q_learning": float(ql_pred.expected_reward),
+                "mab": float(sum(mab_pred.arm_statistics[mab_pred.selected_route].values()) / 3),
             },
             top_3_routes=[(int(r), float(s)) for r, s in top_3],
-            model_agreement_percent=agreement * 100
+            model_agreement_percent=agreement * 100,
         )
 
     def predict(self, X: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
@@ -155,24 +159,22 @@ class RouteOptimizationEnsemble:
 
     def get_metrics(self) -> Dict[str, Any]:
         """Get ensemble metrics"""
-        total = self.metrics['total_selections']
-        agreement_rate = (
-            self.metrics['agreement_count'] / total * 100 if total > 0 else 0
-        )
+        total = self.metrics["total_selections"]
+        agreement_rate = self.metrics["agreement_count"] / total * 100 if total > 0 else 0
 
         return {
             **self.metrics,
-            'agreement_rate_percent': agreement_rate,
-            'weights': {
-                'neural_network': self.nn_weight,
-                'random_forest': self.rf_weight,
-                'q_learning': self.ql_weight,
-                'mab': self.mab_weight,
+            "agreement_rate_percent": agreement_rate,
+            "weights": {
+                "neural_network": self.nn_weight,
+                "random_forest": self.rf_weight,
+                "q_learning": self.ql_weight,
+                "mab": self.mab_weight,
             },
-            'individual_metrics': {
-                'neural_network': self.nn_model.get_metrics(),
-                'random_forest': self.rf_model.get_metrics(),
-                'q_learning': self.ql_model.get_metrics(),
-                'mab': self.mab_model.get_metrics(),
-            }
+            "individual_metrics": {
+                "neural_network": self.nn_model.get_metrics(),
+                "random_forest": self.rf_model.get_metrics(),
+                "q_learning": self.ql_model.get_metrics(),
+                "mab": self.mab_model.get_metrics(),
+            },
         }

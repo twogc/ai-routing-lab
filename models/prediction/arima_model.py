@@ -15,6 +15,7 @@ import numpy as np
 @dataclass
 class ARIMAForecast:
     """ARIMA forecast result"""
+
     predictions: np.ndarray
     confidence_intervals: Tuple[np.ndarray, np.ndarray]
 
@@ -35,7 +36,7 @@ class ARIMAModel:
         self,
         order: Tuple[int, int, int] = (1, 1, 1),
         seasonal_order: Optional[Tuple[int, int, int, int]] = None,
-        logger: Optional[logging.Logger] = None
+        logger: Optional[logging.Logger] = None,
     ):
         """
         Initialize ARIMA model.
@@ -57,13 +58,13 @@ class ARIMAModel:
         self.residuals = None
 
         self.metrics = {
-            'mse': 0.0,
-            'rmse': 0.0,
-            'mae': 0.0,
-            'r_squared': 0.0,
+            "mse": 0.0,
+            "rmse": 0.0,
+            "mae": 0.0,
+            "r_squared": 0.0,
         }
 
-    def fit(self, y: np.ndarray) -> 'ARIMAModel':
+    def fit(self, y: np.ndarray) -> "ARIMAModel":
         """
         Fit ARIMA on time series.
 
@@ -84,13 +85,13 @@ class ARIMAModel:
         # Fit AR coefficients (simple regression)
         if self.p > 0 and len(y_diff) > self.p:
             # AR(p): y_t = c + phi1*y_{t-1} + ... + phip*y_{t-p}
-            X = np.column_stack([y_diff[self.p - i:-i or None] for i in range(1, self.p + 1)])
-            y_target = y_diff[self.p:]
+            X = np.column_stack([y_diff[self.p - i : -i or None] for i in range(1, self.p + 1)])
+            y_target = y_diff[self.p :]
 
             # Least squares
             if X.shape[0] > 0:
                 self.ar_coefs = np.linalg.lstsq(X, y_target, rcond=None)[0]
-                self.intercept = np.mean(y_diff[:self.p])
+                self.intercept = np.mean(y_diff[: self.p])
 
         # MA coefficients (simplified - from residuals)
         if self.q > 0:
@@ -103,13 +104,13 @@ class ARIMAModel:
         # Calculate metrics on original scale
         y_pred = self._inverse_diff(predictions, y)
         mse = np.mean((y - y_pred) ** 2)
-        self.metrics['mse'] = mse
-        self.metrics['rmse'] = np.sqrt(mse)
-        self.metrics['mae'] = np.mean(np.abs(y - y_pred))
+        self.metrics["mse"] = mse
+        self.metrics["rmse"] = np.sqrt(mse)
+        self.metrics["mae"] = np.mean(np.abs(y - y_pred))
 
         ss_res = np.sum((y - y_pred) ** 2)
         ss_tot = np.sum((y - np.mean(y)) ** 2)
-        self.metrics['r_squared'] = 1 - (ss_res / ss_tot) if ss_tot > 0 else 0
+        self.metrics["r_squared"] = 1 - (ss_res / ss_tot) if ss_tot > 0 else 0
 
         self.fitted = True
         self.logger.info(
@@ -119,7 +120,9 @@ class ARIMAModel:
 
         return self
 
-    def forecast(self, y: np.ndarray, steps: int = 1) -> Tuple[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
+    def forecast(
+        self, y: np.ndarray, steps: int = 1
+    ) -> Tuple[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
         """
         Forecast future values.
 
@@ -142,15 +145,12 @@ class ARIMAModel:
             y_diff = np.diff(y_diff)
 
         # Forecast in differenced space
-        current = y_diff[-self.p:].copy() if self.p > 0 else np.array([y_diff[-1]])
+        current = y_diff[-self.p :].copy() if self.p > 0 else np.array([y_diff[-1]])
 
         for _ in range(steps):
             # AR forecast
             if self.p > 0 and self.ar_coefs is not None:
-                y_pred = self.intercept + np.dot(
-                    self.ar_coefs,
-                    current[-self.p:][::-1]
-                )
+                y_pred = self.intercept + np.dot(self.ar_coefs, current[-self.p :][::-1])
             else:
                 y_pred = np.mean(y_diff)
 
@@ -188,9 +188,9 @@ class ARIMAModel:
         """Get model metrics"""
         return {
             **self.metrics,
-            'order': self.order,
-            'seasonal_order': self.seasonal_order,
-            'ar_coefs': self.ar_coefs.tolist() if self.ar_coefs is not None else None,
+            "order": self.order,
+            "seasonal_order": self.seasonal_order,
+            "ar_coefs": self.ar_coefs.tolist() if self.ar_coefs is not None else None,
         }
 
     def _predict_fitted(self, y_diff: np.ndarray) -> np.ndarray:
@@ -199,11 +199,11 @@ class ARIMAModel:
 
         for t in range(len(y_diff)):
             if t < self.p:
-                predictions[t] = np.mean(y_diff[:t + 1])
+                predictions[t] = np.mean(y_diff[: t + 1])
             else:
                 pred = self.intercept if self.ar_coefs is not None else np.mean(y_diff[:t])
                 if self.ar_coefs is not None and self.p > 0:
-                    pred += np.dot(self.ar_coefs, y_diff[t - self.p:t][::-1])
+                    pred += np.dot(self.ar_coefs, y_diff[t - self.p : t][::-1])
                 predictions[t] = pred
 
         return predictions

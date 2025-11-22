@@ -1,4 +1,5 @@
-"""Inference engine for AI Routing Lab."""
+"""Inference module for AI Routing Lab."""
 
-# Inference code will be implemented here
+from inference.predictor_service import app
 
+__all__ = ["app"]
