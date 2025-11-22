@@ -38,7 +38,6 @@ This project is part of **CloudBridge Research Center** — an independent resea
 
 **Contact & Resources:**
 - **Website:** https://cloudbridge-research.ru/
-- **GitHub:** [CloudBridge Research](https://github.com/twogc/cloudbridge-research)
 - **Email:** info@cloudbridge-research.ru
 
 ---
