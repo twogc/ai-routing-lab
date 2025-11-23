@@ -147,10 +147,20 @@ ai-routing-lab/
 │   ├── prediction/              # Модели прогнозирования
 │   │   ├── latency_predictor.py # Прогнозирование задержки
 │   │   ├── jitter_predictor.py  # Прогнозирование джиттера
-│   │   └── route_prediction_ensemble.py # Выбор маршрутов
+│   │   ├── load_ensemble.py     # Ансамбль прогнозирования нагрузки
+│   │   ├── arima_model.py       # ARIMA модель
+│   │   └── prophet_model.py     # Prophet модель
 │   ├── routing/                 # Модели оптимизации маршрутов
+│   │   ├── q_learning_route.py  # Q-Learning
+│   │   ├── multi_armed_bandit.py # Multi-Armed Bandit
+│   │   └── neural_network_route.py # Neural Network
 │   ├── anomaly/                 # Обнаружение аномалий
+│   │   ├── isolation_forest.py  # Isolation Forest
+│   │   └── anomaly_ensemble.py  # Ансамбль аномалий
 │   └── monitoring/              # Мониторинг моделей
+│       ├── drift_detector.py    # Детектор дрейфа
+│       ├── model_monitor.py     # Монитор метрик
+│       └── retraining_orchestrator.py # Оркестратор переобучения
 │
 ├── training/                    # Скрипты обучения
 │   ├── train_latency_model.py   # Обучение latency модели
@@ -305,39 +315,26 @@ make docker-down
 
 ## Модели
 
-### LatencyPredictor
+### Prediction Models (Прогнозирование)
+- **LatencyPredictor:** Random Forest для прогнозирования задержки (R² > 0.92).
+- **JitterPredictor:** Random Forest для прогнозирования джиттера.
+- **LoadPredictionEnsemble:** Ансамбль (LSTM, Prophet, ARIMA, RF) для прогнозирования нагрузки.
+- **ARIMAModel & ProphetModel:** Статистические модели для временных рядов.
 
-Модель Random Forest для прогнозирования задержки маршрутов.
+### Routing Models (Маршрутизация)
+- **RoutePredictionEnsemble:** Комбинирует прогнозы задержки и джиттера (70/30).
+- **QLearningRouter:** Reinforcement Learning для адаптивной маршрутизации.
+- **MultiArmedBanditRouter:** UCB алгоритм для исследования/эксплуатации маршрутов.
+- **NeuralNetworkRouteOptimizer:** Глубокое обучение для сложных паттернов маршрутизации.
 
-**Особенности:**
-- Исторические паттерны задержки
-- Характеристики маршрутов (расположение PoP, BGP пути)
-- Условия сети (перегруженность, потеря пакетов)
-- Временные признаки (временные характеристики)
+### Anomaly Detection (Аномалии)
+- **IsolationForestModel:** Обнаружение аномалий в сетевом трафике.
+- **AnomalyEnsemble:** Взвешенный ансамбль (Isolation Forest, One-Class SVM, LSTM Autoencoder) для надежного детектирования.
 
-**Цель:** Точность >92% (R² метрика)
-
-### JitterPredictor
-
-Модель Random Forest для прогнозирования изменчивости джиттера маршрутов.
-
-**Особенности:**
-- Исторические паттерны джиттера
-- Метрики стабильности маршрутов
-- Индикаторы изменчивости сети
-
-**Цель:** Точность >92% (R² метрика)
-
-### RoutePredictionEnsemble
-
-Комбинирует прогнозы задержки и джиттера для оптимального выбора маршрутов.
-
-**Скоринг:**
-- Вес задержки: 70%
-- Вес джиттера: 30%
-- Выбирает маршрут с наилучшей объединенной оценкой
-
-**Цель:** >95% оптимального выбора маршрутов
+### Monitoring (Мониторинг)
+- **DriftDetector:** Обнаружение дрейфа данных (Data Drift) и концепций (Concept Drift).
+- **ModelMonitor:** Отслеживание метрик здоровья моделей в реальном времени.
+- **RetrainingOrchestrator:** Автоматическое переобучение при деградации качества.
 
 ---
 
@@ -762,10 +759,10 @@ print(f"Ранжирование: {result['ranking']}")
 ### Тестирование
 
 Проект включает комплексную тестовую инфраструктуру:
-- **62 unit тестов** для основных компонентов
+- **196 unit тестов** для основных компонентов
 - **Integration тесты** для интеграции с quic-test
 - **E2E тесты** для полного workflow
-- **Coverage:** 22.73% (цель: 70%+)
+- **Coverage:** 71.73% (цель: 70% достигнута)
 
 ### CI/CD
 

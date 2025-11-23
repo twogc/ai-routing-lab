@@ -57,7 +57,7 @@ class MultiArmedBanditRouter:
         else:
             selected = np.argmax(ucb_scores)
 
-        return selected, ucb_scores
+        return selected, {i: float(ucb_scores[i]) for i in range(self.n_routes)}
 
     def update_reward(self, route: int, reward: float):
         """Update reward for selected route"""

@@ -122,6 +122,8 @@ class LoadPredictionEnsemble:
         self.logger.info("Fitting Prophet...")
         self.prophet_model.fit(y)
 
+        self.fitted = True
+
         # Calculate ensemble metrics
         predictions = self.predict(X)[0]
         mse = np.mean((y - predictions) ** 2)
@@ -133,7 +135,6 @@ class LoadPredictionEnsemble:
         ss_tot = np.sum((y - np.mean(y)) ** 2)
         self.metrics["r_squared"] = 1 - (ss_res / ss_tot) if ss_tot > 0 else 0
 
-        self.fitted = True
         self.logger.info(
             f"Load Prediction Ensemble fitted, R²={self.metrics['r_squared']:.4f}, "
             f"RMSE={self.metrics['rmse']:.4f}"
@@ -167,8 +168,8 @@ class LoadPredictionEnsemble:
         arima_uncert = np.std(X, axis=0)[0] * 0.1
 
         # Prophet - similar to LSTM
-        prophet_preds = lstm_preds.copy()
-        prophet_uncert = lstm_uncert.copy()
+        prophet_preds = lstm_preds.copy() if hasattr(lstm_preds, "copy") else lstm_preds
+        prophet_uncert = lstm_uncert.copy() if hasattr(lstm_uncert, "copy") else lstm_uncert
 
         # Normalize predictions to same scale
         rf_preds_norm = self._normalize(rf_preds)

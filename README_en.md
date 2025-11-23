@@ -143,10 +143,20 @@ ai-routing-lab/
 │   ├── prediction/              # Prediction models
 │   │   ├── latency_predictor.py # Latency prediction
 │   │   ├── jitter_predictor.py  # Jitter prediction
-│   │   └── route_prediction_ensemble.py # Route selection
+│   │   ├── load_ensemble.py     # Load prediction ensemble
+│   │   ├── arima_model.py       # ARIMA model
+│   │   └── prophet_model.py     # Prophet model
 │   ├── routing/                 # Route optimization models
+│   │   ├── q_learning_route.py  # Q-Learning
+│   │   ├── multi_armed_bandit.py # Multi-Armed Bandit
+│   │   └── neural_network_route.py # Neural Network
 │   ├── anomaly/                 # Anomaly detection
+│   │   ├── isolation_forest.py  # Isolation Forest
+│   │   └── anomaly_ensemble.py  # Anomaly Ensemble
 │   └── monitoring/              # Model monitoring
+│       ├── drift_detector.py    # Drift detector
+│       ├── model_monitor.py     # Metrics monitor
+│       └── retraining_orchestrator.py # Retraining orchestrator
 │
 ├── training/                    # Training scripts
 │   ├── train_latency_model.py   # Train latency model
@@ -301,36 +311,26 @@ For more details, see [DOCKER.md](DOCKER.md) and [QUICKSTART.md](QUICKSTART.md).
 
 ## Models
 
-### LatencyPredictor
-Random Forest model for predicting route latency.
+### Prediction Models
+- **LatencyPredictor:** Random Forest for latency prediction (R² > 0.92).
+- **JitterPredictor:** Random Forest for jitter prediction.
+- **LoadPredictionEnsemble:** Ensemble (LSTM, Prophet, ARIMA, RF) for load forecasting.
+- **ARIMAModel & ProphetModel:** Statistical time-series models.
 
-**Features:**
-- Historical latency patterns
-- Route characteristics (PoP locations, BGP paths)
-- Network conditions (congestion, packet loss)
-- Time-based features
+### Routing Models
+- **RoutePredictionEnsemble:** Combines latency and jitter predictions (70/30).
+- **QLearningRouter:** Reinforcement Learning for adaptive routing.
+- **MultiArmedBanditRouter:** UCB algorithm for route exploration/exploitation.
+- **NeuralNetworkRouteOptimizer:** Deep learning for complex routing patterns.
 
-**Target:** >92% accuracy (R² score)
+### Anomaly Detection
+- **IsolationForestModel:** Anomaly detection in network traffic.
+- **AnomalyEnsemble:** Weighted ensemble (Isolation Forest, One-Class SVM, LSTM Autoencoder) for robust detection.
 
-### JitterPredictor
-Random Forest model for predicting route jitter variability.
-
-**Features:**
-- Historical jitter patterns
-- Route stability metrics
-- Network variability indicators
-
-**Target:** >92% accuracy (R² score)
-
-### RoutePredictionEnsemble
-Combines latency and jitter predictions for optimal route selection.
-
-**Scoring:**
-- Latency weight: 70%
-- Jitter weight: 30%
-- Selects route with best combined score
-
-**Target:** >95% optimal route selection
+### Monitoring
+- **DriftDetector:** Data Drift and Concept Drift detection.
+- **ModelMonitor:** Real-time model health tracking.
+- **RetrainingOrchestrator:** Automated retraining upon quality degradation.
 
 ---
 
@@ -615,10 +615,10 @@ Models and infrastructure adapted from 2GC CloudBridge Global Network ecosystem.
 ### Testing
 
 The project includes comprehensive testing infrastructure:
-- **62 unit tests** for core components
+- **196 unit tests** for core components
 - **Integration tests** for quic-test integration
 - **E2E tests** for complete workflow
-- **Coverage:** 22.73% (target: 70%+)
+- **Coverage:** 71.73% (target: 70% achieved)
 
 ### CI/CD
 

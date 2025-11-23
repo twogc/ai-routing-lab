@@ -108,6 +108,8 @@ class RandomForestLoadModel:
         # Calculate feature importances
         self.feature_importances = self._calculate_feature_importance(X_scaled, y)
 
+        self.fitted = True
+
         # Calculate training metrics
         predictions = self.predict(X)[0]
         mse = np.mean((y - predictions) ** 2)
@@ -119,8 +121,6 @@ class RandomForestLoadModel:
         ss_res = np.sum((y - predictions) ** 2)
         ss_tot = np.sum((y - np.mean(y)) ** 2)
         self.metrics["r_squared"] = 1 - (ss_res / ss_tot) if ss_tot > 0 else 0
-
-        self.fitted = True
         self.logger.info(
             f"Random Forest fitted on {len(X)} samples, "
             f"R²={self.metrics['r_squared']:.4f}, RMSE={self.metrics['rmse']:.4f}"

@@ -29,17 +29,22 @@ class RoutePrediction:
     jitter_confidence: float
     overall_confidence: float
 
+    @property
+    def confidence_score(self) -> float:
+        """Alias for overall_confidence for compatibility."""
+        return self.overall_confidence
+
 
 class RoutePredictionEnsemble:
     """
     Ensemble combining latency and jitter predictions for route selection.
-
+    
     Combines predictions from LatencyPredictor and JitterPredictor to rank routes.
     Lower latency and jitter = better route.
-
+    
     Scoring formula:
     score = (latency_weight * normalized_latency) + (jitter_weight * normalized_jitter)
-
+    
     Target: >92% accuracy in selecting optimal routes
     """
 
@@ -74,6 +79,19 @@ class RoutePredictionEnsemble:
 
         self.fitted = False
         self.metrics = {"total_predictions": 0, "optimal_route_selected": 0}
+
+    def predict(self, features: np.ndarray) -> RoutePrediction:
+        """
+        Predict for a single input vector (compatibility method).
+        
+        Args:
+            features: Input features array
+            
+        Returns:
+            RoutePrediction object
+        """
+        # Assume features are used for both latency and jitter for now
+        return self.predict_route(features, features)
 
     def fit(
         self,
