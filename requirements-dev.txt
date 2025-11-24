@@ -37,3 +37,7 @@ rich>=13.7.0
 # Security
 bandit>=1.7.0
 safety>=3.0.0
+
+# AI Agents Framework (optional, for laboratory works)
+# Install with: pip install cai-framework
+# cai-framework==0.5.5

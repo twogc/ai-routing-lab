@@ -177,6 +177,14 @@ ai-routing-lab/
 │   ├── example_experiment.py   # Пример эксперимента
 │   └── latency_jitter_experiment.py # Полный workflow
 │
+├── labs/                        # Лабораторные работы с CAI
+│   ├── lab_ai_routing.py       # AI-ассистированная оптимизация маршрутизации
+│   ├── lab_ml_security.py      # Тестирование безопасности ML-систем
+│   └── lab_ai_monitoring.py    # AI-мониторинг сетевой инфраструктуры
+│
+├── examples/                    # Примеры использования
+│   └── cai_integration.py      # Примеры интеграции CAI
+│
 ├── tests/                       # Тесты
 │   ├── unit/                    # Unit тесты
 │   ├── integration/             # Integration тесты
@@ -188,7 +196,9 @@ ai-routing-lab/
 └── docs/                        # Документация
     ├── architecture/            # Архитектура
     ├── development/             # Разработка
-    └── guides/                  # Руководства
+    ├── guides/                  # Руководства
+    └── labs/                    # Документация лабораторных работ
+        └── CAI_INTEGRATION.md  # Интеграция CAI Framework
 ```
 
 ---
@@ -198,8 +208,8 @@ ai-routing-lab/
 ### Предварительные требования
 
 - Python 3.11+
-- [quic-test](https://github.com/twogc/quic-test) запущен и экспортирует метрики
-- Prometheus (опционально, для сбора метрик)
+- [quic-test](https://github.com/twogc/quic-test) - основной инструмент тестирования QUIC протокола для генерации метрик и валидации моделей
+- Prometheus (опционально, для сбора метрик из quic-test)
 
 ### Установка
 
@@ -280,6 +290,24 @@ python experiments/latency_jitter_experiment.py
 python -m data.collectors.quic_test_collector --prometheus-url http://localhost:9090
 ```
 
+#### Лабораторные работы с CAI Framework (опционально)
+
+```bash
+# Установка CAI framework (опционально)
+pip install cai-framework==0.5.5
+
+# Настройка API ключей в .env файле
+# OPENAI_API_KEY=your-api-key-here
+# CAI_MODEL=openai/gpt-4o
+
+# Запуск лабораторных работ
+python -m labs.lab_ai_routing        # AI-ассистированная оптимизация маршрутизации
+python -m labs.lab_ml_security       # Тестирование безопасности ML-систем
+python -m labs.lab_ai_monitoring     # AI-мониторинг сетевой инфраструктуры
+```
+
+Подробнее см. [Лабораторные работы с CAI](labs/README.md) и [Руководство по интеграции CAI](docs/labs/CAI_INTEGRATION.md).
+
 ### Тестирование
 
 ```bash
@@ -340,7 +368,9 @@ make docker-down
 
 ## Интеграция с quic-test
 
-AI Routing Lab интегрируется с [quic-test](https://github.com/twogc/quic-test) для обеспечения полного цикла разработки ML моделей. **Полная документация по интеграции доступна в [docs/QUIC_TEST_INTEGRATION_RU.md](docs/QUIC_TEST_INTEGRATION_RU.md).**
+AI Routing Lab интегрируется с [quic-test](https://github.com/twogc/quic-test) - основным инструментом тестирования QUIC протокола для обеспечения полного цикла разработки ML моделей. **Полная документация по интеграции доступна в [docs/QUIC_TEST_INTEGRATION_RU.md](docs/QUIC_TEST_INTEGRATION_RU.md).**
+
+quic-test является основным источником данных для обучения и валидации ML моделей, предоставляя реальные метрики QUIC трафика в различных сетевых условиях.
 
 Ключевые возможности интеграции:
 
@@ -348,14 +378,16 @@ AI Routing Lab интегрируется с [quic-test](https://github.com/twog
    - Экспорт метрик Prometheus из quic-test
    - JSON экспорт для исторических данных
    - Потоковая передача метрик в реальном времени
+   - Сбор метрик в различных сетевых условиях (WiFi, LTE, 5G, satellite, adversarial)
 
 2. **Валидация моделей (Model Validation):**
-   - Валидация ML прогнозов на реальном QUIC трафике
+   - Валидация ML прогнозов на реальном QUIC трафике из quic-test
    - Сравнение прогнозируемых vs фактических значений задержки/джиттера
    - Расчет метрик точности прогнозирования
+   - Валидация на различных сетевых профилях
 
 3. **Тестирование в производстве (Production Testing):**
-   - Тестирование выбора маршрутов в контролируемой среде
+   - Тестирование выбора маршрутов в контролируемой среде с использованием quic-test
    - Фреймворк A/B тестирования
    - Бенчмарки производительности
 
@@ -468,6 +500,10 @@ make security         # Проверка безопасности
 ### Эксперименты
 - [Лабораторные эксперименты](experiments/README.md)
 
+### Лабораторные работы с CAI
+- [Лабораторные работы с CAI Framework](labs/README.md) - AI-агенты для оптимизации маршрутизации и безопасности
+- [Руководство по интеграции CAI](docs/labs/CAI_INTEGRATION.md) - Подробное руководство по использованию CAI
+
 ### Отчеты
 - [Лабораторные отчеты](reports/README.md) - Отчеты об испытаниях, организованные по датам и версиям
 
@@ -481,6 +517,7 @@ make security         # Проверка безопасности
 - **Обработка данных:** pandas, numpy
 - **Сбор метрик:** prometheus-client
 - **API:** FastAPI / gRPC
+- **AI Agents Framework:** CAI Framework 0.5.5 (опционально, для лабораторных работ)
 
 ---
 
