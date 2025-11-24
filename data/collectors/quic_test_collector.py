@@ -42,7 +42,8 @@ class PrometheusCollector:
         Returns:
             Dictionary with latency metrics (p50, p95, p99, jitter)
         """
-        query = "quic_latency_p95_ms"
+        # Updated to match quic-test export: quic_rtt_p95_ms
+        query = "quic_rtt_p95_ms"
         if route_id:
             query += f'{{route_id="{route_id}"}}'
 
@@ -75,7 +76,8 @@ class PrometheusCollector:
         Returns:
             Dictionary with jitter metrics
         """
-        query = "quic_jitter_p95_ms"
+        # Updated to match quic-test export: quic_rtt_max_ms (used for jitter)
+        query = "quic_rtt_max_ms"
         if route_id:
             query += f'{{route_id="{route_id}"}}'
 
@@ -169,32 +171,40 @@ class JSONFileCollector(FileSystemEventHandler):
             "timestamp": datetime.now().isoformat(),
         }
 
-        # Extract latency metrics
-        if "Latency" in data:
-            latency = data["Latency"]
+        # Extract latency metrics (support both Capitalized and lowercase keys)
+        latency = data.get("Latency") or data.get("latency")
+        if latency:
             metrics["latency"] = {
-                "p50": latency.get("P50", 0),
-                "p95": latency.get("P95", 0),
-                "p99": latency.get("P99", 0),
-                "average": latency.get("Average", 0),
-                "jitter": latency.get("Jitter", 0),
+                "p50": latency.get("P50") or latency.get("p50", 0),
+                "p95": latency.get("P95") or latency.get("p95", 0),
+                "p99": latency.get("P99") or latency.get("p99", 0),
+                "average": latency.get("Average") or latency.get("average", 0),
+                "jitter": latency.get("Jitter") or latency.get("jitter", 0),
             }
 
         # Extract throughput metrics
-        if "Throughput" in data:
-            throughput = data["Throughput"]
+        throughput = data.get("Throughput") or data.get("throughput")
+        if throughput:
             metrics["throughput"] = {
-                "average": throughput.get("Average", 0),
-                "peak": throughput.get("Peak", 0),
+                "average": throughput.get("Average") or throughput.get("average", 0),
+                "peak": throughput.get("Peak") or throughput.get("peak", 0),
             }
 
         # Extract route information if available
         if "RouteID" in data:
             metrics["route_id"] = data["RouteID"]
+        elif "route_id" in data:
+            metrics["route_id"] = data["route_id"]
+            
         if "SourcePoP" in data:
             metrics["source_pop"] = data["SourcePoP"]
+        elif "source_pop" in data:
+            metrics["source_pop"] = data["source_pop"]
+            
         if "TargetPoP" in data:
             metrics["target_pop"] = data["TargetPoP"]
+        elif "target_pop" in data:
+            metrics["target_pop"] = data["target_pop"]
 
         return metrics
 
