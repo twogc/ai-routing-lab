@@ -55,7 +55,6 @@ def trained_ensemble(temp_models_dir):
 
 
 @pytest.mark.integration
-@pytest.mark.skipif(not FASTAPI_AVAILABLE, reason="FastAPI not installed")
 class TestPredictorService:
     """Integration tests for predictor service."""
 
@@ -143,7 +142,6 @@ class TestPredictorService:
 
 
 @pytest.mark.integration
-@pytest.mark.skipif(not FASTAPI_AVAILABLE, reason="FastAPI not installed")
 class TestPredictorServiceWithModel:
     """Integration tests with loaded model."""
 

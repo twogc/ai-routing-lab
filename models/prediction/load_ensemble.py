@@ -163,8 +163,13 @@ class LoadPredictionEnsemble:
         lstm_preds, lstm_ci = self.lstm_model.predict(X)
         lstm_uncert = (lstm_ci[1] - lstm_ci[0]) / (2 * 1.96)
 
-        # ARIMA - use last value as forecast (simplified)
-        arima_preds = np.full(len(X), y[-1] if "y" in locals() else X[:, 0].mean())
+        # ARIMA - use model forecast or fallback to mean
+        try:
+            arima_forecast = self.arima_model.forecast(np.array([0]), len(X))
+            arima_preds = arima_forecast[0] if len(arima_forecast) > 0 else np.full(len(X), X[:, 0].mean())
+        except Exception:
+            # Fallback to mean if ARIMA forecast fails
+            arima_preds = np.full(len(X), X[:, 0].mean())
         arima_uncert = np.std(X, axis=0)[0] * 0.1
 
         # Prophet - similar to LSTM
