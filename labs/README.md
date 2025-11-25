@@ -101,6 +101,81 @@ agent = AIMonitoringAgent(prometheus_url="http://localhost:9090")
 results = await agent.monitor_workflow()
 ```
 
+### 4. Autonomous VPN Administrator
+
+**File:** `lab_autonomous_vpn.py`
+
+**Objective:** Create an AI agent that autonomously manages a Masque VPN server, monitoring metrics and handling client lifecycle to ensure security and performance.
+
+**Key Concepts:**
+- Autonomous infrastructure management
+- Security policy enforcement via AI
+- Automated threat response (e.g., revoking compromised clients)
+- Integration with VPN API
+
+**Usage:**
+```bash
+python -m labs.lab_autonomous_vpn
+```
+
+**Example:**
+```python
+from labs.lab_autonomous_vpn import MasqueAdminAgent
+
+admin = MasqueAdminAgent()
+await admin.run_security_audit()
+```
+
+### 5. Autonomous QUIC Protocol Testing
+
+**File:** `lab_quic_testing.py`
+
+**Objective:** Create an AI agent that actively tests the QUIC protocol under various network conditions to identify performance bottlenecks and stability issues.
+
+**Key Concepts:**
+- Active network testing
+- Automated stress testing
+- Performance analysis and benchmarking
+- Network profile simulation
+
+**Usage:**
+```bash
+python -m labs.lab_quic_testing
+```
+
+**Example:**
+```python
+from labs.lab_quic_testing import QuicTestAgent
+
+tester = QuicTestAgent()
+await tester.run_stress_test()
+```
+
+### 6. Autonomous Network Orchestration
+
+**File:** `lab_orchestrator.py`
+
+**Objective:** Create a master AI agent (Orchestrator) that coordinates network testing and VPN management to maintain optimal system performance.
+
+**Key Concepts:**
+- Closed-loop control systems
+- Multi-agent coordination (simulated via single agent with multiple tools)
+- Automated remediation
+- Full-stack network autonomy
+
+**Usage:**
+```bash
+python -m labs.lab_orchestrator
+```
+
+**Example:**
+```python
+from labs.lab_orchestrator import OrchestratorAgent
+
+orchestrator = OrchestratorAgent()
+await orchestrator.run_optimization_cycle()
+```
+
 ## Configuration
 
 ### Environment Variables
