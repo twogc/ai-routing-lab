@@ -18,11 +18,12 @@ from typing import Optional
 
 try:
     from cai.sdk.agents import Agent, OpenAIChatCompletionsModel, Runner
+
     from labs.tools.cai_masque_tools import (
-        list_vpn_clients,
         create_vpn_client,
         delete_vpn_client,
         get_vpn_metrics,
+        list_vpn_clients,
     )
 
     CAI_AVAILABLE = True

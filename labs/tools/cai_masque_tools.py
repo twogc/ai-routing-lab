@@ -2,6 +2,7 @@ import os
 from typing import Optional
 
 from cai.sdk.agents import function_tool
+
 from labs.tools.masque_client import MasqueVPNClient
 
 # Initialize client with env vars or defaults

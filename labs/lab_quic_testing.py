@@ -18,6 +18,7 @@ from typing import Optional
 
 try:
     from cai.sdk.agents import Agent, OpenAIChatCompletionsModel, Runner
+
     from labs.tools.cai_quic_tools import run_quic_network_test
 
     CAI_AVAILABLE = True
