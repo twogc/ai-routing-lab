@@ -4,6 +4,7 @@ import pytest
 import numpy as np
 from models.routing.random_forest_route import RandomForestRouteClassifier, RouteSelection
 
+
 class TestRandomForestRouteClassifier:
     """Test suite for RandomForestRouteClassifier."""
 
@@ -14,11 +15,16 @@ class TestRandomForestRouteClassifier:
     @pytest.fixture
     def sample_data(self):
         # Create simple separable data
-        X = np.array([
-            [0.1, 0.1], [0.2, 0.2],  # Class 0
-            [0.8, 0.8], [0.9, 0.9],  # Class 1
-            [0.1, 0.9], [0.2, 0.8]   # Class 2
-        ])
+        X = np.array(
+            [
+                [0.1, 0.1],
+                [0.2, 0.2],  # Class 0
+                [0.8, 0.8],
+                [0.9, 0.9],  # Class 1
+                [0.1, 0.9],
+                [0.2, 0.8],  # Class 2
+            ]
+        )
         y = np.array([0, 0, 1, 1, 2, 2])
         return X, y
 
@@ -33,7 +39,7 @@ class TestRandomForestRouteClassifier:
         """Test training."""
         X, y = sample_data
         classifier.fit(X, y)
-        
+
         assert classifier.fitted
         assert len(classifier.trees) == 5
 
@@ -48,7 +54,7 @@ class TestRandomForestRouteClassifier:
         np.random.seed(42)
         X, y = sample_data
         classifier.fit(X, y)
-        
+
         preds, confs = classifier.predict(X)
         assert len(preds) == len(X)
         assert len(confs) == len(X)
@@ -60,7 +66,7 @@ class TestRandomForestRouteClassifier:
         np.random.seed(42)
         X, y = sample_data
         classifier.fit(X, y)
-        
+
         selection = classifier.predict_sample(X[0])
         assert isinstance(selection, RouteSelection)
         assert 0 <= selection.selected_route < 3
@@ -72,7 +78,7 @@ class TestRandomForestRouteClassifier:
         np.random.seed(42)
         X, y = sample_data
         classifier.fit(X, y)
-        
+
         score = classifier.score(X, y)
         assert score > 0.5
 

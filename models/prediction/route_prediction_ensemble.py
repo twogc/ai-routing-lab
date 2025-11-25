@@ -38,13 +38,13 @@ class RoutePrediction:
 class RoutePredictionEnsemble:
     """
     Ensemble combining latency and jitter predictions for route selection.
-    
+
     Combines predictions from LatencyPredictor and JitterPredictor to rank routes.
     Lower latency and jitter = better route.
-    
+
     Scoring formula:
     score = (latency_weight * normalized_latency) + (jitter_weight * normalized_jitter)
-    
+
     Target: >92% accuracy in selecting optimal routes
     """
 
@@ -83,10 +83,10 @@ class RoutePredictionEnsemble:
     def predict(self, features: np.ndarray) -> RoutePrediction:
         """
         Predict for a single input vector (compatibility method).
-        
+
         Args:
             features: Input features array
-            
+
         Returns:
             RoutePrediction object
         """

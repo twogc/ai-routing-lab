@@ -2,7 +2,12 @@
 
 import pytest
 import numpy as np
-from models.anomaly.isolation_forest import IsolationForestModel, IsolationForestEnsemble, AnomalyPrediction
+from models.anomaly.isolation_forest import (
+    IsolationForestModel,
+    IsolationForestEnsemble,
+    AnomalyPrediction,
+)
+
 
 class TestIsolationForestModel:
     """Test suite for IsolationForestModel."""
@@ -31,7 +36,7 @@ class TestIsolationForestModel:
         """Test training."""
         X, _ = sample_data
         model.fit(X)
-        
+
         assert model.fitted
         assert len(model.trees) == 10
         assert model.thresholds is not None
@@ -46,7 +51,7 @@ class TestIsolationForestModel:
         """Test prediction."""
         X, y = sample_data
         model.fit(X)
-        
+
         preds, scores = model.predict(X)
         assert len(preds) == len(X)
         assert len(scores) == len(X)
@@ -57,7 +62,7 @@ class TestIsolationForestModel:
         """Test single sample prediction."""
         X, _ = sample_data
         model.fit(X)
-        
+
         prediction = model.predict_sample(X[0])
         assert isinstance(prediction, AnomalyPrediction)
         assert 0.0 <= prediction.confidence <= 1.0
@@ -67,7 +72,7 @@ class TestIsolationForestModel:
         """Test scoring."""
         X, y = sample_data
         model.fit(X)
-        
+
         score = model.score(X, y)
         assert 0.0 <= score <= 1.0
 
@@ -76,10 +81,11 @@ class TestIsolationForestModel:
         X, _ = sample_data
         model.fit(X)
         model.predict(X)
-        
+
         metrics = model.get_metrics()
         assert "anomaly_rate_percent" in metrics
         assert "n_trees" in metrics
+
 
 class TestIsolationForestEnsemble:
     """Test suite for IsolationForestEnsemble."""
@@ -88,10 +94,10 @@ class TestIsolationForestEnsemble:
         """Test ensemble functionality."""
         X = np.random.normal(0, 1, (20, 2))
         ensemble = IsolationForestEnsemble(n_models=2, n_trees=5, sample_size=10)
-        
+
         ensemble.fit(X)
         preds, scores = ensemble.predict(X)
-        
+
         assert len(preds) == 20
         assert len(scores) == 20
         assert len(ensemble.models) == 2

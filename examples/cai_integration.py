@@ -18,12 +18,11 @@ from typing import Dict, List, Optional
 try:
     from cai.sdk.agents import Agent, Runner, OpenAIChatCompletionsModel
     from cai.tools.reconnaissance.generic_linux_command import generic_linux_command
+
     CAI_AVAILABLE = True
 except ImportError:
     CAI_AVAILABLE = False
-    logging.warning(
-        "CAI framework not available. Install with: pip install cai-framework"
-    )
+    logging.warning("CAI framework not available. Install with: pip install cai-framework")
 
 from dotenv import load_dotenv
 
@@ -228,4 +227,3 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-

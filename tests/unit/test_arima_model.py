@@ -4,6 +4,7 @@ import pytest
 import numpy as np
 from models.prediction.arima_model import ARIMAModel
 
+
 class TestARIMAModel:
     """Test suite for ARIMAModel."""
 
@@ -28,7 +29,7 @@ class TestARIMAModel:
     def test_fit(self, model, sample_data):
         """Test fitting."""
         model.fit(sample_data)
-        
+
         assert model.fitted
         assert model.ar_coefs is not None
         assert len(model.ar_coefs) == 1
@@ -43,14 +44,14 @@ class TestARIMAModel:
     def test_forecast(self, model, sample_data):
         """Test forecasting."""
         model.fit(sample_data)
-        
+
         steps = 5
         forecasts, (ci_lower, ci_upper) = model.forecast(sample_data, steps=steps)
-        
+
         assert len(forecasts) == steps
         assert len(ci_lower) == steps
         assert len(ci_upper) == steps
-        
+
         # Check if forecast continues the trend
         last_val = sample_data[-1]
         # With d=1, it should predict constant difference (linear trend)
@@ -67,7 +68,7 @@ class TestARIMAModel:
         """Test metrics retrieval."""
         model.fit(sample_data)
         metrics = model.get_metrics()
-        
+
         assert "mse" in metrics
         assert "order" in metrics
         assert "ar_coefs" in metrics

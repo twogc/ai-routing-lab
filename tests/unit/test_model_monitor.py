@@ -3,6 +3,7 @@
 import pytest
 from models.monitoring.model_monitor import ModelMonitor, ModelHealth
 
+
 class TestModelMonitor:
     """Test suite for ModelMonitor."""
 
@@ -20,7 +21,7 @@ class TestModelMonitor:
         """Test recording predictions."""
         monitor.record_prediction(prediction=1, ground_truth=1, latency_ms=10.0)
         monitor.record_prediction(prediction=1, ground_truth=0, latency_ms=20.0)
-        
+
         assert monitor.predictions_total == 2
         assert monitor.predictions_correct == 1
         assert len(monitor.latencies) == 2
@@ -29,7 +30,7 @@ class TestModelMonitor:
         """Test current metrics calculation."""
         monitor.record_prediction(prediction=1, ground_truth=1, latency_ms=10.0)
         monitor.record_prediction(prediction=1, ground_truth=0, latency_ms=20.0)
-        
+
         metrics = monitor.get_current_metrics()
         assert isinstance(metrics, ModelHealth)
         assert metrics.accuracy == 0.5
@@ -40,7 +41,7 @@ class TestModelMonitor:
         """Test metrics summary."""
         monitor.record_prediction(prediction=1, ground_truth=1, latency_ms=10.0)
         monitor.get_current_metrics()
-        
+
         summary = monitor.get_metrics_summary()
         assert summary["model_id"] == "test_model"
         assert summary["metrics_count"] == 1
@@ -49,7 +50,7 @@ class TestModelMonitor:
     def test_get_prometheus_metrics(self, monitor):
         """Test Prometheus metrics format."""
         monitor.record_prediction(prediction=1, ground_truth=1)
-        
+
         output = monitor.get_prometheus_metrics()
         assert "cloudbridge_model_accuracy" in output
         assert 'model_id="test_model"' in output
@@ -58,7 +59,7 @@ class TestModelMonitor:
         """Test resetting metrics."""
         monitor.record_prediction(prediction=1, ground_truth=1)
         monitor.reset_metrics()
-        
+
         assert monitor.predictions_total == 0
         assert len(monitor.latencies) == 0
 
@@ -68,13 +69,13 @@ class TestModelMonitor:
         monitor.record_prediction(prediction=1, ground_truth=1, latency_ms=10.0)
         metrics = monitor.get_current_metrics()
         assert metrics.status == "healthy"
-        
+
         # Degraded (low accuracy)
         monitor.reset_metrics()
         monitor.record_prediction(prediction=0, ground_truth=1, latency_ms=10.0)
         metrics = monitor.get_current_metrics()
         assert metrics.status == "degraded"
-        
+
         # Unhealthy (low accuracy + high latency)
         monitor.reset_metrics()
         monitor.record_prediction(prediction=0, ground_truth=1, latency_ms=200.0)

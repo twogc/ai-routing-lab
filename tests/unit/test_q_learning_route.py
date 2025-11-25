@@ -4,6 +4,7 @@ import pytest
 import numpy as np
 from models.routing.q_learning_route import QLearningRouter, QLearningDecision
 
+
 class TestQLearningRouter:
     """Test suite for QLearningRouter."""
 
@@ -28,7 +29,7 @@ class TestQLearningRouter:
         """Test training."""
         X, y = sample_data
         router.fit(X, y, epochs=2)
-        
+
         assert router.fitted
         assert router.total_updates > 0
         assert np.any(router.q_table != 0)
@@ -37,7 +38,7 @@ class TestQLearningRouter:
         """Test route selection before training."""
         X, _ = sample_data
         decision = router.select_route(X[0])
-        
+
         assert decision.selected_route == 0
         assert all(v == 0.0 for v in decision.q_values.values())
 
@@ -45,9 +46,9 @@ class TestQLearningRouter:
         """Test route selection after training."""
         X, y = sample_data
         router.fit(X, y, epochs=5)
-        
+
         decision = router.select_route(X[0])
-        
+
         assert isinstance(decision, QLearningDecision)
         assert 0 <= decision.selected_route < 3
         assert len(decision.q_values) == 3
@@ -56,8 +57,8 @@ class TestQLearningRouter:
         """Test exploration mode."""
         X, y = sample_data
         router.fit(X, y)
-        
-        # Force exploration (mock random to ensure explore path taken? 
+
+        # Force exploration (mock random to ensure explore path taken?
         # Or just run multiple times and check valid output)
         decision = router.select_route(X[0], explore=True)
         assert 0 <= decision.selected_route < 3
@@ -66,9 +67,9 @@ class TestQLearningRouter:
         """Test single update."""
         X, _ = sample_data
         initial_q = router.q_table.copy()
-        
+
         router.update(X[0], action=1, reward=10.0)
-        
+
         assert router.total_updates == 1
         assert not np.array_equal(router.q_table, initial_q)
 
@@ -76,7 +77,7 @@ class TestQLearningRouter:
         """Test metrics retrieval."""
         X, y = sample_data
         router.fit(X, y)
-        
+
         metrics = router.get_metrics()
         assert "n_routes" in metrics
         assert "mean_q_value" in metrics

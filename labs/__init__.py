@@ -26,4 +26,3 @@ try:
 except ImportError:
     # CAI framework not available
     __all__ = []
-

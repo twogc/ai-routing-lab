@@ -10,11 +10,12 @@ from models.prediction.route_prediction_ensemble import RoutePredictionEnsemble,
 
 client = TestClient(app)
 
+
 @pytest.fixture
 def mock_ensemble_model():
     """Mock RoutePredictionEnsemble."""
     mock_model = MagicMock(spec=RoutePredictionEnsemble)
-    
+
     # Mock predict method
     mock_prediction = RoutePrediction(
         route_id=0,
@@ -23,10 +24,11 @@ def mock_ensemble_model():
         combined_score=0.5,
         latency_confidence=0.95,
         jitter_confidence=0.95,
-        overall_confidence=0.95
+        overall_confidence=0.95,
     )
     mock_model.predict.return_value = mock_prediction
     return mock_model
+
 
 @pytest.fixture
 def mock_registry():
@@ -34,6 +36,7 @@ def mock_registry():
     mock_reg = MagicMock()
     mock_reg.list_models.return_value = []
     return mock_reg
+
 
 class TestPredictorService:
     """Test suite for Predictor Service."""
@@ -65,14 +68,11 @@ class TestPredictorService:
         """Test single route prediction."""
         # Setup mock
         mock_model.predict = mock_ensemble_model.predict
-        
-        payload = {
-            "features": [25.5, 2.3, 0.95, 1.0],
-            "route_id": "route_0"
-        }
-        
+
+        payload = {"features": [25.5, 2.3, 0.95, 1.0], "route_id": "route_0"}
+
         response = client.post("/predict", json=payload)
-        
+
         assert response.status_code == 200
         data = response.json()
         assert data["route_id"] == "route_0"
@@ -83,10 +83,7 @@ class TestPredictorService:
     def test_predict_route_no_model(self):
         """Test prediction when model is not loaded."""
         with patch("inference.predictor_service.ensemble_model", None):
-            payload = {
-                "features": [25.5, 2.3, 0.95, 1.0],
-                "route_id": "route_0"
-            }
+            payload = {"features": [25.5, 2.3, 0.95, 1.0], "route_id": "route_0"}
             response = client.post("/predict", json=payload)
             assert response.status_code == 503
             assert "Model not loaded" in response.json()["detail"]
@@ -96,16 +93,11 @@ class TestPredictorService:
         """Test multiple routes prediction."""
         # Setup mock
         mock_model.predict = mock_ensemble_model.predict
-        
-        payload = {
-            "routes": {
-                "route_0": [25.5, 2.3, 0.95, 1.0],
-                "route_1": [30.1, 3.1, 0.85, 1.2]
-            }
-        }
-        
+
+        payload = {"routes": {"route_0": [25.5, 2.3, 0.95, 1.0], "route_1": [30.1, 3.1, 0.85, 1.2]}}
+
         response = client.post("/predict/routes", json=payload)
-        
+
         assert response.status_code == 200
         data = response.json()
         assert "best_route" in data
@@ -129,11 +121,11 @@ class TestPredictorService:
         mock_metadata.version = "1.0.0"
         mock_metadata.accuracy = 0.95
         mock_metadata.framework = "sklearn"
-        
+
         mock_reg.list_models.return_value = [mock_metadata]
-        
+
         response = client.get("/models")
-        
+
         assert response.status_code == 200
         data = response.json()
         assert len(data["models"]) == 1

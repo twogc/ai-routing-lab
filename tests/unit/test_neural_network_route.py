@@ -4,6 +4,7 @@ import pytest
 import numpy as np
 from models.routing.neural_network_route import NeuralNetworkRouteOptimizer, NNRouteSelection
 
+
 class TestNeuralNetworkRouteOptimizer:
     """Test suite for NeuralNetworkRouteOptimizer."""
 
@@ -28,7 +29,7 @@ class TestNeuralNetworkRouteOptimizer:
         """Test training (mock implementation)."""
         X, y = sample_data
         optimizer.fit(X, y, epochs=2)
-        
+
         assert optimizer.fitted
         assert optimizer.weights1 is not None
         assert optimizer.weights2 is not None
@@ -45,7 +46,7 @@ class TestNeuralNetworkRouteOptimizer:
         """Test prediction."""
         X, y = sample_data
         optimizer.fit(X, y)
-        
+
         preds, confs = optimizer.predict(X)
         assert len(preds) == len(X)
         assert len(confs) == len(X)
@@ -56,7 +57,7 @@ class TestNeuralNetworkRouteOptimizer:
         """Test single sample prediction."""
         X, y = sample_data
         optimizer.fit(X, y)
-        
+
         selection = optimizer.predict_sample(X[0])
         assert isinstance(selection, NNRouteSelection)
         assert 0 <= selection.selected_route < 3
@@ -67,7 +68,7 @@ class TestNeuralNetworkRouteOptimizer:
         """Test scoring."""
         X, y = sample_data
         optimizer.fit(X, y)
-        
+
         score = optimizer.score(X, y)
         assert 0.0 <= score <= 1.0
 

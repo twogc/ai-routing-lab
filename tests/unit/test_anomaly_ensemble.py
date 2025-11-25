@@ -3,7 +3,12 @@
 import pytest
 import numpy as np
 from unittest.mock import MagicMock, patch
-from models.anomaly.anomaly_ensemble import AnomalyEnsemble, EnsembleAnomalyPrediction, AnomalyDetectionPipeline
+from models.anomaly.anomaly_ensemble import (
+    AnomalyEnsemble,
+    EnsembleAnomalyPrediction,
+    AnomalyDetectionPipeline,
+)
+
 
 class TestAnomalyEnsemble:
     """Test suite for AnomalyEnsemble."""
@@ -34,10 +39,12 @@ class TestAnomalyEnsemble:
 
     @pytest.fixture
     def ensemble(self, mock_if, mock_svm, mock_lstm):
-        with patch("models.anomaly.anomaly_ensemble.IsolationForestModel", return_value=mock_if), \
-             patch("models.anomaly.anomaly_ensemble.OneClassSVMModel", return_value=mock_svm), \
-             patch("models.anomaly.anomaly_ensemble.LSTMAutoencoderModel", return_value=mock_lstm):
-            
+        with (
+            patch("models.anomaly.anomaly_ensemble.IsolationForestModel", return_value=mock_if),
+            patch("models.anomaly.anomaly_ensemble.OneClassSVMModel", return_value=mock_svm),
+            patch("models.anomaly.anomaly_ensemble.LSTMAutoencoderModel", return_value=mock_lstm),
+        ):
+
             ensemble = AnomalyEnsemble()
             ensemble.if_model = mock_if
             ensemble.svm_model = mock_svm
@@ -55,7 +62,7 @@ class TestAnomalyEnsemble:
         """Test training."""
         X = np.zeros((5, 4))
         ensemble.fit(X)
-        
+
         assert ensemble.fitted
         ensemble.if_model.fit.assert_called_once()
         ensemble.svm_model.fit.assert_called_once()
@@ -70,14 +77,14 @@ class TestAnomalyEnsemble:
         """Test prediction logic."""
         ensemble.fitted = True
         X = np.zeros((1, 4))
-        
+
         # IF(0.25)*0.2 + SVM(0.25)*0.3 + LSTM(0.5)*0.8
         # Scores are normalized inside predict, so we need to mock normalized scores or check logic
         # The mock returns fixed scores.
         # normalize([0.2]) -> [0.5] (if max==min)
-        
+
         preds, scores = ensemble.predict(X)
-        
+
         assert len(preds) == 1
         assert len(scores) == 1
 
@@ -85,9 +92,9 @@ class TestAnomalyEnsemble:
         """Test single sample prediction."""
         ensemble.fitted = True
         X = np.zeros(4)
-        
+
         prediction = ensemble.predict_sample(X)
-        
+
         assert isinstance(prediction, EnsembleAnomalyPrediction)
         assert len(prediction.voting_results) == 3
 
@@ -96,7 +103,7 @@ class TestAnomalyEnsemble:
         ensemble.fitted = True
         X = np.zeros((1, 4))
         y = np.array([0])
-        
+
         score = ensemble.score(X, y)
         assert 0.0 <= score <= 1.0
 
@@ -104,7 +111,7 @@ class TestAnomalyEnsemble:
         """Test metrics retrieval."""
         ensemble.fitted = True
         ensemble.predict(np.zeros((1, 4)))
-        
+
         metrics = ensemble.get_metrics()
         assert "anomaly_rate_percent" in metrics
         assert "weights" in metrics
@@ -115,11 +122,12 @@ class TestAnomalyEnsemble:
         norm = ensemble._normalize_scores(scores)
         assert np.min(norm) == 0.0
         assert np.max(norm) == 1.0
-        
+
         # Test constant scores
         scores = np.array([0.5, 0.5])
         norm = ensemble._normalize_scores(scores)
         assert np.all(norm == 0.5)
+
 
 class TestAnomalyDetectionPipeline:
     """Test suite for AnomalyDetectionPipeline."""
@@ -128,12 +136,12 @@ class TestAnomalyDetectionPipeline:
         """Test pipeline flow."""
         mock_ensemble = MagicMock()
         mock_ensemble.predict_sample.return_value = MagicMock()
-        
+
         pipeline = AnomalyDetectionPipeline(ensemble=mock_ensemble)
         X = np.zeros((5, 4))
-        
+
         pipeline.fit(X)
         mock_ensemble.fit.assert_called_once()
-        
+
         pipeline.predict(X[0])
         mock_ensemble.predict_sample.assert_called_once()

@@ -19,12 +19,11 @@ from typing import Dict, List, Optional
 try:
     from cai.sdk.agents import Agent, Runner, OpenAIChatCompletionsModel
     from cai.tools.reconnaissance.generic_linux_command import generic_linux_command
+
     CAI_AVAILABLE = True
 except ImportError:
     CAI_AVAILABLE = False
-    logging.warning(
-        "CAI framework not available. Install with: pip install cai-framework"
-    )
+    logging.warning("CAI framework not available. Install with: pip install cai-framework")
 
 from dotenv import load_dotenv
 
@@ -58,9 +57,7 @@ class AIMonitoringAgent:
             prometheus_url: Prometheus server URL
         """
         if not CAI_AVAILABLE:
-            raise ImportError(
-                "CAI framework is required. Install with: pip install cai-framework"
-            )
+            raise ImportError("CAI framework is required. Install with: pip install cai-framework")
 
         self.prometheus_url = prometheus_url
         self.model_name = model_name or os.getenv("CAI_MODEL", "openai/gpt-4o")
@@ -186,11 +183,13 @@ class AIMonitoringAgent:
         anomalies = []
         for i, (pred, score) in enumerate(zip(predictions, scores)):
             if pred == 1:  # Anomaly detected
-                anomalies.append({
-                    "index": i,
-                    "metrics": metrics_data[i],
-                    "anomaly_score": float(score),
-                })
+                anomalies.append(
+                    {
+                        "index": i,
+                        "metrics": metrics_data[i],
+                        "anomaly_score": float(score),
+                    }
+                )
 
         return {
             "anomalies": anomalies,
@@ -281,9 +280,7 @@ async def main():
         python -m labs.lab_ai_monitoring
     """
     if not CAI_AVAILABLE:
-        logger.error(
-            "CAI framework is not available. Install with: pip install cai-framework"
-        )
+        logger.error("CAI framework is not available. Install with: pip install cai-framework")
         return
 
     # Initialize monitoring agent
@@ -312,4 +309,3 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-

@@ -4,6 +4,7 @@ import pytest
 import numpy as np
 from models.prediction.random_forest_load import RandomForestLoadModel, LoadPrediction
 
+
 class TestRandomForestLoadModel:
     """Test suite for RandomForestLoadModel."""
 
@@ -29,7 +30,7 @@ class TestRandomForestLoadModel:
         """Test training."""
         X, y = sample_data
         model.fit(X, y)
-        
+
         assert model.fitted
         assert len(model.trees) == 5
         assert model.feature_importances is not None
@@ -45,11 +46,11 @@ class TestRandomForestLoadModel:
         """Test prediction."""
         X, y = sample_data
         model.fit(X, y)
-        
+
         preds, uncertainties = model.predict(X)
         assert len(preds) == len(X)
         assert len(uncertainties) == len(X)
-        
+
         # Check if predictions are reasonable (MSE should be low)
         mse = np.mean((preds - y) ** 2)
         assert mse < 0.5
@@ -58,7 +59,7 @@ class TestRandomForestLoadModel:
         """Test single sample prediction."""
         X, y = sample_data
         model.fit(X, y)
-        
+
         prediction = model.predict_sample(X[0])
         assert isinstance(prediction, LoadPrediction)
         assert isinstance(prediction.predicted_load, float)
@@ -69,7 +70,7 @@ class TestRandomForestLoadModel:
         """Test scoring."""
         X, y = sample_data
         model.fit(X, y)
-        
+
         score = model.score(X, y)
         assert score > 0.0  # R2 should be positive for this simple relationship
 
@@ -77,7 +78,7 @@ class TestRandomForestLoadModel:
         """Test metrics retrieval."""
         X, y = sample_data
         model.fit(X, y)
-        
+
         metrics = model.get_metrics()
         assert "mse" in metrics
         assert "r_squared" in metrics
@@ -87,7 +88,7 @@ class TestRandomForestLoadModel:
         """Test feature importance calculation."""
         X, y = sample_data
         model.fit(X, y)
-        
+
         importances = model.feature_importances
         # Feature 0 (coeff 2) should be more important than Feature 2 (coeff 0)
         # But with small data/trees it might be noisy, so just check shape/sum

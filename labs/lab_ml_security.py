@@ -20,12 +20,11 @@ try:
     from cai.sdk.agents import Agent, Runner, OpenAIChatCompletionsModel
     from cai.tools.reconnaissance.curl import curl_request
     from cai.tools.reconnaissance.generic_linux_command import generic_linux_command
+
     CAI_AVAILABLE = True
 except ImportError:
     CAI_AVAILABLE = False
-    logging.warning(
-        "CAI framework not available. Install with: pip install cai-framework"
-    )
+    logging.warning("CAI framework not available. Install with: pip install cai-framework")
 
 from dotenv import load_dotenv
 
@@ -56,9 +55,7 @@ class MLSecurityTester:
             api_url: FastAPI service URL to test
         """
         if not CAI_AVAILABLE:
-            raise ImportError(
-                "CAI framework is required. Install with: pip install cai-framework"
-            )
+            raise ImportError("CAI framework is required. Install with: pip install cai-framework")
 
         self.api_url = api_url
         self.model_name = model_name or os.getenv("CAI_MODEL", "openai/gpt-4o")
@@ -276,9 +273,7 @@ async def main():
         python -m labs.lab_ml_security
     """
     if not CAI_AVAILABLE:
-        logger.error(
-            "CAI framework is not available. Install with: pip install cai-framework"
-        )
+        logger.error("CAI framework is not available. Install with: pip install cai-framework")
         return
 
     # Initialize security tester
@@ -305,4 +300,3 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-

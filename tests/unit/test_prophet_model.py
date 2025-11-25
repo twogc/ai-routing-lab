@@ -4,6 +4,7 @@ import pytest
 import numpy as np
 from models.prediction.prophet_model import ProphetModel
 
+
 class TestProphetModel:
     """Test suite for ProphetModel."""
 
@@ -30,7 +31,7 @@ class TestProphetModel:
     def test_fit(self, model, sample_data):
         """Test fitting."""
         model.fit(sample_data)
-        
+
         assert model.fitted
         assert model.trend_coefs is not None
         assert model.seasonal_coefs is not None
@@ -45,14 +46,14 @@ class TestProphetModel:
     def test_forecast(self, model, sample_data):
         """Test forecasting."""
         model.fit(sample_data)
-        
+
         steps = 10
         forecasts, (ci_lower, ci_upper) = model.forecast(sample_data, steps=steps)
-        
+
         assert len(forecasts) == steps
         assert len(ci_lower) == steps
         assert len(ci_upper) == steps
-        
+
         # Check if forecast captures seasonality (roughly)
         # Peak should be around step 2-3 (sin(pi/2) = 1 at t=2.5)
         # Trough around step 7-8 (sin(3pi/2) = -1 at t=7.5)
@@ -65,13 +66,13 @@ class TestProphetModel:
     def test_decompose(self, model, sample_data):
         """Test decomposition."""
         model.fit(sample_data)
-        
+
         trend, seasonal, residual = model.decompose(sample_data)
-        
+
         assert len(trend) == len(sample_data)
         assert len(seasonal) == len(sample_data)
         assert len(residual) == len(sample_data)
-        
+
         # Reconstruct
         reconstructed = trend + seasonal + residual
         assert np.allclose(reconstructed, sample_data, atol=1e-5)
@@ -86,6 +87,6 @@ class TestProphetModel:
         """Test metrics retrieval."""
         model.fit(sample_data)
         metrics = model.get_metrics()
-        
+
         assert "mse" in metrics
         assert "seasonality_period" in metrics

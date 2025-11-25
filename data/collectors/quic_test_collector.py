@@ -195,12 +195,12 @@ class JSONFileCollector(FileSystemEventHandler):
             metrics["route_id"] = data["RouteID"]
         elif "route_id" in data:
             metrics["route_id"] = data["route_id"]
-            
+
         if "SourcePoP" in data:
             metrics["source_pop"] = data["SourcePoP"]
         elif "source_pop" in data:
             metrics["source_pop"] = data["source_pop"]
-            
+
         if "TargetPoP" in data:
             metrics["target_pop"] = data["TargetPoP"]
         elif "target_pop" in data:

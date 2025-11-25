@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from unittest.mock import MagicMock, patch
 from models.monitoring.retraining_orchestrator import RetrainingOrchestrator, RetrainingJob
 
+
 class TestRetrainingOrchestrator:
     """Test suite for RetrainingOrchestrator."""
 
@@ -22,7 +23,7 @@ class TestRetrainingOrchestrator:
     def test_schedule_retraining_immediate(self, orchestrator):
         """Test immediate scheduling."""
         job_id = orchestrator.schedule_retraining("model_1", immediate=True)
-        
+
         assert job_id is not None
         assert "model_1" in orchestrator.active_jobs
         assert orchestrator.active_jobs["model_1"] == job_id
@@ -33,15 +34,15 @@ class TestRetrainingOrchestrator:
         # First run
         job_id = orchestrator.schedule_retraining("model_1")
         assert job_id is not None
-        
+
         # Simulate completion
         orchestrator.last_retraining["model_1"] = datetime.now()
         del orchestrator.active_jobs["model_1"]
-        
+
         # Second run (too soon)
         job_id_2 = orchestrator.schedule_retraining("model_1")
         assert job_id_2 is None
-        
+
         # Second run (after interval)
         with patch("models.monitoring.retraining_orchestrator.datetime") as mock_dt:
             mock_dt.now.return_value = datetime.now() + timedelta(hours=25)
@@ -53,9 +54,9 @@ class TestRetrainingOrchestrator:
         job_id = orchestrator.schedule_retraining("model_1", immediate=True)
         X = np.zeros((10, 5))
         y = np.zeros(10)
-        
+
         result = orchestrator.execute_retraining(job_id, X, y)
-        
+
         assert result["status"] == "completed"
         assert result["training_samples"] == 10
         assert "model_1" not in orchestrator.active_jobs
@@ -82,7 +83,7 @@ class TestRetrainingOrchestrator:
         """Test job status retrieval."""
         job_id = orchestrator.schedule_retraining("model_1", immediate=True)
         status = orchestrator.get_job_status(job_id)
-        
+
         assert status is not None
         assert status["job_id"] == job_id
         assert status["status"] == "pending"
@@ -91,10 +92,10 @@ class TestRetrainingOrchestrator:
         """Test history retrieval."""
         orchestrator.schedule_retraining("model_1", immediate=True)
         orchestrator.schedule_retraining("model_2", immediate=True)
-        
+
         history = orchestrator.get_retraining_history()
         assert len(history) == 2
-        
+
         history_m1 = orchestrator.get_retraining_history(model_id="model_1")
         assert len(history_m1) == 1
 
@@ -102,7 +103,7 @@ class TestRetrainingOrchestrator:
         """Test metrics retrieval."""
         job_id = orchestrator.schedule_retraining("model_1", immediate=True)
         orchestrator.execute_retraining(job_id, np.zeros((10, 5)), np.zeros(10))
-        
+
         metrics = orchestrator.get_metrics()
         assert metrics["total_jobs"] == 1
         assert metrics["completed_jobs"] == 1
