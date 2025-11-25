@@ -82,7 +82,7 @@ class QuicTestAgent:
         Run a full stress test suite.
         """
         logger.info("Starting QUIC stress test...")
-        
+
         query = """
         Conduct a stress test of the QUIC protocol.
         1. Run a short 5s test on 'excellent' profile to establish baseline.
@@ -91,13 +91,14 @@ class QuicTestAgent:
         4. Compare the results. Which profile had the worst performance?
         5. Provide a final stability report.
         """
-        
+
         result = await Runner.run(self.agent, query)
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("QUIC Stress Test Report")
-        print("="*60)
+        print("=" * 60)
         print(result)
-        print("="*60)
+        print("=" * 60)
+
 
 async def main():
     if not CAI_AVAILABLE:
@@ -105,9 +106,10 @@ async def main():
         return
 
     tester = QuicTestAgent()
-    
+
     # Run the stress test
     await tester.run_stress_test()
+
 
 if __name__ == "__main__":
     asyncio.run(main())

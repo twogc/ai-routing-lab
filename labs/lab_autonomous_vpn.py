@@ -91,7 +91,7 @@ class MasqueAdminAgent:
         Run a security audit cycle.
         """
         logger.info("Starting security audit...")
-        
+
         query = """
         Perform a security audit of the VPN server:
         1. Get the current metrics.
@@ -100,13 +100,14 @@ class MasqueAdminAgent:
         4. If you find a client with > 10 crypto errors, revoke them immediately.
         5. Provide a summary report of the system status.
         """
-        
+
         result = await Runner.run(self.agent, query)
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("VPN Security Audit Report")
-        print("="*60)
+        print("=" * 60)
         print(result)
-        print("="*60)
+        print("=" * 60)
+
 
 async def main():
     if not CAI_AVAILABLE:
@@ -114,9 +115,10 @@ async def main():
         return
 
     admin_agent = MasqueAdminAgent()
-    
+
     # Run the audit
     await admin_agent.run_security_audit()
+
 
 if __name__ == "__main__":
     asyncio.run(main())

@@ -166,7 +166,9 @@ class LoadPredictionEnsemble:
         # ARIMA - use model forecast or fallback to mean
         try:
             arima_forecast = self.arima_model.forecast(np.array([0]), len(X))
-            arima_preds = arima_forecast[0] if len(arima_forecast) > 0 else np.full(len(X), X[:, 0].mean())
+            arima_preds = (
+                arima_forecast[0] if len(arima_forecast) > 0 else np.full(len(X), X[:, 0].mean())
+            )
         except Exception:
             # Fallback to mean if ARIMA forecast fails
             arima_preds = np.full(len(X), X[:, 0].mean())

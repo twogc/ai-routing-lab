@@ -20,7 +20,7 @@ from typing import Optional
 
 try:
     from cai.sdk.agents import Agent, OpenAIChatCompletionsModel, Runner
-    
+
     # Import tools from both domains
     from labs.tools.cai_masque_tools import (
         list_vpn_clients,
@@ -98,7 +98,7 @@ class OrchestratorAgent:
         Run a full optimization cycle.
         """
         logger.info("Starting Orchestration Cycle...")
-        
+
         query = """
         Execute a network optimization cycle:
         1. Run a 'good' profile test for 5s to establish baseline.
@@ -106,13 +106,14 @@ class OrchestratorAgent:
         3. If you see any client with > 1000 bytes_rx (just as an example threshold for this lab) AND the test showed latency > 100ms, consider them a 'noisy neighbor' and simulate revoking them (or actually revoke if you are sure).
         4. Summarize the state of the network.
         """
-        
+
         result = await Runner.run(self.agent, query)
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("Orchestration Report")
-        print("="*60)
+        print("=" * 60)
         print(result)
-        print("="*60)
+        print("=" * 60)
+
 
 async def main():
     if not CAI_AVAILABLE:
@@ -120,9 +121,10 @@ async def main():
         return
 
     orchestrator = OrchestratorAgent()
-    
+
     # Run the cycle
     await orchestrator.run_optimization_cycle()
+
 
 if __name__ == "__main__":
     asyncio.run(main())

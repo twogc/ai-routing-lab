@@ -4,6 +4,7 @@ from typing import Dict, List, Optional, Any
 
 logger = logging.getLogger(__name__)
 
+
 class MasqueVPNClient:
     """
     Client for interacting with Masque VPN HTTP API.
@@ -92,22 +93,22 @@ class MasqueVPNClient:
             # or allow a separate metrics URL configuration if needed.
             # Let's try the standard Prometheus port 9090 if the base URL is 8080,
             # otherwise assume it's relative.
-            
+
             # Parsing base_url to switch port if needed is complex, so let's assume
             # the user might provide a separate metrics URL or we use the one from docs.
             # Docs say: "Доступно на порту 9090 (по умолчанию)."
-            
+
             # For robustness, let's try to fetch from the configured base_url/metrics first
             # (if proxied), if that fails, we might need a separate config.
             # But the 'lab_ai_routing.py' uses port 9090.
-            
+
             # Let's assume for this client, we stick to the API port for management.
             # If we want metrics, we might need a separate method or URL.
             # Let's try the API endpoint mentioned in docs if it exists, or fallback.
             # Docs say: "GET /metrics ... Возвращает метрики ... Доступно на порту 9090"
             # It's ambiguous if it's also on 8080/api/metrics.
             # Let's implement a safe fetch.
-            
+
             # We will use a dedicated metrics URL if provided, or guess.
             metrics_url = self.base_url.replace(":8080", ":9090").replace("/api", "") + "/metrics"
             response = requests.get(metrics_url, timeout=5)

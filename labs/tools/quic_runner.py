@@ -6,6 +6,7 @@ from typing import Dict, Optional, Any
 
 logger = logging.getLogger(__name__)
 
+
 class QuicTestRunner:
     """
     Wrapper for running quic-test binary.
@@ -19,13 +20,15 @@ class QuicTestRunner:
             binary_path: Path to quic-test binary. If None, tries to find it.
         """
         self.binary_path = binary_path or os.getenv("QUIC_TEST_BINARY", "quic-test")
-        
+
         # Try to resolve relative path if default is used and we are in the lab repo
         if self.binary_path == "quic-test" and not self._is_executable(self.binary_path):
-             # Assumption: quic-test repo is parallel to ai-routing-lab
-             potential_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../../quic-test/bin/quic-test"))
-             if os.path.exists(potential_path):
-                 self.binary_path = potential_path
+            # Assumption: quic-test repo is parallel to ai-routing-lab
+            potential_path = os.path.abspath(
+                os.path.join(os.path.dirname(__file__), "../../../../quic-test/bin/quic-test")
+            )
+            if os.path.exists(potential_path):
+                self.binary_path = potential_path
 
     def _is_executable(self, path: str) -> bool:
         return os.path.isfile(path) and os.access(path, os.X_OK)
@@ -35,7 +38,7 @@ class QuicTestRunner:
         mode: str = "test",
         network_profile: str = "excellent",
         duration: str = "10s",
-        extra_args: Optional[List[str]] = None
+        extra_args: Optional[List[str]] = None,
     ) -> Dict[str, Any]:
         """
         Run quic-test.
@@ -50,16 +53,16 @@ class QuicTestRunner:
             Dictionary with execution results (stdout, stderr, exit_code)
         """
         if not self.binary_path:
-             return {"error": "quic-test binary not found"}
+            return {"error": "quic-test binary not found"}
 
         cmd = [
             self.binary_path,
             f"--mode={mode}",
             f"--network-profile={network_profile}",
             f"--duration={duration}",
-            "--json" # Force JSON output if supported by binary for easier parsing, or we parse stdout
+            "--json",  # Force JSON output if supported by binary for easier parsing, or we parse stdout
         ]
-        
+
         if extra_args:
             cmd.extend(extra_args)
 
@@ -70,16 +73,16 @@ class QuicTestRunner:
                 cmd,
                 capture_output=True,
                 text=True,
-                timeout=float(duration.replace("s", "")) + 5 if "s" in duration else 60
+                timeout=float(duration.replace("s", "")) + 5 if "s" in duration else 60,
             )
-            
+
             output = {
                 "exit_code": result.returncode,
                 "stdout": result.stdout,
                 "stderr": result.stderr,
-                "command": " ".join(cmd)
+                "command": " ".join(cmd),
             }
-            
+
             # Try to parse last line as JSON if possible, or just return raw
             return output
 
