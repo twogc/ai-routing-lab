@@ -1,9 +1,11 @@
 """Unit tests for QuicTestCollector."""
 
 import json
+from unittest.mock import MagicMock, mock_open, patch
+
 import pytest
-from unittest.mock import MagicMock, patch, mock_open
-from data.collectors.quic_test_collector import PrometheusCollector, JSONFileCollector
+
+from data.collectors.quic_test_collector import JSONFileCollector, PrometheusCollector
 
 
 @pytest.fixture

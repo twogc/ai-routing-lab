@@ -1,8 +1,9 @@
 """Unit tests for QLearningRouter."""
 
-import pytest
 import numpy as np
-from models.routing.q_learning_route import QLearningRouter, QLearningDecision
+import pytest
+
+from models.routing.q_learning_route import QLearningDecision, QLearningRouter
 
 
 class TestQLearningRouter:

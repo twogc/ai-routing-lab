@@ -1,7 +1,8 @@
 """Unit tests for ProphetModel."""
 
-import pytest
 import numpy as np
+import pytest
+
 from models.prediction.prophet_model import ProphetModel
 
 

@@ -1,8 +1,9 @@
 """Unit tests for RandomForestLoadModel."""
 
-import pytest
 import numpy as np
-from models.prediction.random_forest_load import RandomForestLoadModel, LoadPrediction
+import pytest
+
+from models.prediction.random_forest_load import LoadPrediction, RandomForestLoadModel
 
 
 class TestRandomForestLoadModel:

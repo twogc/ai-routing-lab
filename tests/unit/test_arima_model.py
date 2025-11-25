@@ -1,7 +1,8 @@
 """Unit tests for ARIMAModel."""
 
-import pytest
 import numpy as np
+import pytest
+
 from models.prediction.arima_model import ARIMAModel
 
 

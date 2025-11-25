@@ -1,7 +1,8 @@
 """Unit tests for ModelMonitor."""
 
 import pytest
-from models.monitoring.model_monitor import ModelMonitor, ModelHealth
+
+from models.monitoring.model_monitor import ModelHealth, ModelMonitor
 
 
 class TestModelMonitor:

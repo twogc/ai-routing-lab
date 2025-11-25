@@ -1,9 +1,11 @@
 """Unit tests for LoadPredictionEnsemble."""
 
-import pytest
-import numpy as np
 from unittest.mock import MagicMock, patch
-from models.prediction.load_ensemble import LoadPredictionEnsemble, EnsembleForecast
+
+import numpy as np
+import pytest
+
+from models.prediction.load_ensemble import EnsembleForecast, LoadPredictionEnsemble
 
 
 class TestLoadPredictionEnsemble:

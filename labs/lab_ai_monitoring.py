@@ -17,7 +17,7 @@ import os
 from typing import Dict, List, Optional
 
 try:
-    from cai.sdk.agents import Agent, Runner, OpenAIChatCompletionsModel
+    from cai.sdk.agents import Agent, OpenAIChatCompletionsModel, Runner
     from cai.tools.reconnaissance.generic_linux_command import generic_linux_command
 
     CAI_AVAILABLE = True
@@ -25,10 +25,10 @@ except ImportError:
     CAI_AVAILABLE = False
     logging.warning("CAI framework not available. Install with: pip install cai-framework")
 
+import numpy as np
 from dotenv import load_dotenv
 
 from models.anomaly.isolation_forest import IsolationForestModel
-import numpy as np
 
 load_dotenv()
 

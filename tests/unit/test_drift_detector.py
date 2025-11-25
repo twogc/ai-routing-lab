@@ -1,8 +1,9 @@
 """Unit tests for DriftDetector."""
 
-import pytest
 import numpy as np
-from models.monitoring.drift_detector import DriftDetector, DataDrift, ConceptDrift
+import pytest
+
+from models.monitoring.drift_detector import ConceptDrift, DataDrift, DriftDetector
 
 
 class TestDriftDetector:

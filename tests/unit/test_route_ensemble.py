@@ -1,9 +1,11 @@
 """Unit tests for RouteOptimizationEnsemble."""
 
-import pytest
-import numpy as np
 from unittest.mock import MagicMock, patch
-from models.routing.route_ensemble import RouteOptimizationEnsemble, EnsembleRouteSelection
+
+import numpy as np
+import pytest
+
+from models.routing.route_ensemble import EnsembleRouteSelection, RouteOptimizationEnsemble
 
 
 class TestRouteOptimizationEnsemble:

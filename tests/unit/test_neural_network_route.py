@@ -1,7 +1,8 @@
 """Unit tests for NeuralNetworkRouteOptimizer."""
 
-import pytest
 import numpy as np
+import pytest
+
 from models.routing.neural_network_route import NeuralNetworkRouteOptimizer, NNRouteSelection
 
 

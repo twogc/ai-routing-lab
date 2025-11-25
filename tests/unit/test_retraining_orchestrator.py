@@ -1,10 +1,12 @@
 """Unit tests for RetrainingOrchestrator."""
 
-import pytest
-import numpy as np
 from datetime import datetime, timedelta
 from unittest.mock import MagicMock, patch
-from models.monitoring.retraining_orchestrator import RetrainingOrchestrator, RetrainingJob
+
+import numpy as np
+import pytest
+
+from models.monitoring.retraining_orchestrator import RetrainingJob, RetrainingOrchestrator
 
 
 class TestRetrainingOrchestrator:

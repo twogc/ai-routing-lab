@@ -17,7 +17,7 @@ import os
 from typing import Dict, List, Optional
 
 try:
-    from cai.sdk.agents import Agent, Runner, OpenAIChatCompletionsModel
+    from cai.sdk.agents import Agent, OpenAIChatCompletionsModel, Runner
     from cai.tools.reconnaissance.curl import curl_request
     from cai.tools.reconnaissance.generic_linux_command import generic_linux_command
 

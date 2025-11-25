@@ -1,12 +1,13 @@
 """Unit tests for Inference Service."""
 
+from unittest.mock import MagicMock, patch
+
+import numpy as np
 import pytest
 from fastapi.testclient import TestClient
-from unittest.mock import MagicMock, patch
-import numpy as np
 
 from inference.predictor_service import app
-from models.prediction.route_prediction_ensemble import RoutePredictionEnsemble, RoutePrediction
+from models.prediction.route_prediction_ensemble import RoutePrediction, RoutePredictionEnsemble
 
 client = TestClient(app)
 

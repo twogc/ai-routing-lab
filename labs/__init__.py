@@ -14,9 +14,9 @@ __version__ = "0.1.0"
 
 # Import main classes for easy access
 try:
+    from labs.lab_ai_monitoring import AIMonitoringAgent
     from labs.lab_ai_routing import AIRoutingAgent
     from labs.lab_ml_security import MLSecurityTester
-    from labs.lab_ai_monitoring import AIMonitoringAgent
 
     __all__ = [
         "AIRoutingAgent",

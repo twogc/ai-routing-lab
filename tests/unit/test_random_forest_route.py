@@ -1,7 +1,8 @@
 """Unit tests for RandomForestRouteClassifier."""
 
-import pytest
 import numpy as np
+import pytest
+
 from models.routing.random_forest_route import RandomForestRouteClassifier, RouteSelection
 
 

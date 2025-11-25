@@ -1,8 +1,9 @@
 """Unit tests for MultiArmedBanditRouter."""
 
-import pytest
 import numpy as np
-from models.routing.multi_armed_bandit import MultiArmedBanditRouter, MABRouteSelection
+import pytest
+
+from models.routing.multi_armed_bandit import MABRouteSelection, MultiArmedBanditRouter
 
 
 class TestMultiArmedBanditRouter:

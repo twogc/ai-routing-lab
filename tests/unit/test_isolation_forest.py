@@ -1,11 +1,12 @@
 """Unit tests for IsolationForestModel."""
 
-import pytest
 import numpy as np
+import pytest
+
 from models.anomaly.isolation_forest import (
-    IsolationForestModel,
-    IsolationForestEnsemble,
     AnomalyPrediction,
+    IsolationForestEnsemble,
+    IsolationForestModel,
 )
 
 

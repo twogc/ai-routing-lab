@@ -1,12 +1,14 @@
 """Unit tests for AnomalyEnsemble."""
 
-import pytest
-import numpy as np
 from unittest.mock import MagicMock, patch
+
+import numpy as np
+import pytest
+
 from models.anomaly.anomaly_ensemble import (
+    AnomalyDetectionPipeline,
     AnomalyEnsemble,
     EnsembleAnomalyPrediction,
-    AnomalyDetectionPipeline,
 )
 
 
